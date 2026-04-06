@@ -1,36 +1,37 @@
-@import "tailwindcss";
-
 /* ============================================================
    Friends Journey Platform — Adventure Earth design system
    ============================================================ */
 
 :root {
-  --paper: oklch(0.965 0.012 75);
-  --paper-2: oklch(0.935 0.018 72);
-  --paper-3: oklch(0.895 0.022 70);
-  --ink: oklch(0.22 0.012 55);
-  --ink-2: oklch(0.40 0.013 60);
-  --ink-3: oklch(0.58 0.012 65);
-  --line: oklch(0.86 0.018 70);
-  --line-2: oklch(0.78 0.022 68);
+  /* Colors — Adventure Earth palette */
+  --paper: oklch(0.965 0.012 75);          /* warm cream */
+  --paper-2: oklch(0.935 0.018 72);        /* deeper cream */
+  --paper-3: oklch(0.895 0.022 70);        /* sand */
+  --ink: oklch(0.22 0.012 55);             /* warm near-black */
+  --ink-2: oklch(0.40 0.013 60);           /* muted ink */
+  --ink-3: oklch(0.58 0.012 65);           /* tertiary text */
+  --line: oklch(0.86 0.018 70);            /* subtle border */
+  --line-2: oklch(0.78 0.022 68);          /* stronger border */
 
-  --terracotta: oklch(0.62 0.135 40);
+  --terracotta: oklch(0.62 0.135 40);      /* primary accent */
   --terracotta-ink: oklch(0.42 0.12 38);
   --terracotta-soft: oklch(0.88 0.05 50);
-  --teal: oklch(0.42 0.06 205);
+  --teal: oklch(0.42 0.06 205);            /* deep teal accent */
   --teal-soft: oklch(0.88 0.025 200);
-  --moss: oklch(0.50 0.07 150);
+  --moss: oklch(0.50 0.07 150);            /* support */
   --moss-soft: oklch(0.88 0.03 150);
-  --sun: oklch(0.78 0.13 75);
+  --sun: oklch(0.78 0.13 75);              /* sand-yellow */
 
   --status-planning: var(--teal);
   --status-active: var(--terracotta);
   --status-done: var(--ink-3);
 
+  /* Type */
   --font-display: "Geist", -apple-system, "Helvetica Neue", sans-serif;
   --font-body: "Geist", -apple-system, "Helvetica Neue", sans-serif;
   --font-mono: "JetBrains Mono", "Menlo", monospace;
 
+  /* Density */
   --r-xs: 4px;
   --r-sm: 8px;
   --r-md: 14px;
@@ -53,7 +54,7 @@
   --shadow-lg: 0 24px 48px -16px oklch(0.20 0.01 60 / 0.18), 0 8px 16px -8px oklch(0.20 0.01 60 / 0.10);
 }
 
-/* Palette presets */
+/* Palette presets (driven by Tweaks) */
 [data-palette="adventure"] {
   --paper: oklch(0.965 0.012 75);
   --paper-2: oklch(0.935 0.018 72);
@@ -146,8 +147,7 @@
 * {
   box-sizing: border-box;
 }
-html,
-body {
+html, body {
   margin: 0;
   padding: 0;
   font-family: var(--font-body);
@@ -162,43 +162,22 @@ body {
   line-height: 1.5;
   letter-spacing: -0.005em;
 }
-button {
-  font-family: inherit;
-  cursor: pointer;
-  border: none;
-  background: none;
-  color: inherit;
-}
-input,
-textarea,
-select {
-  font-family: inherit;
-}
-a {
-  color: inherit;
-  text-decoration: none;
-}
+button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+input, textarea, select { font-family: inherit; }
+a { color: inherit; text-decoration: none; }
 
-h1,
-h2,
-h3,
-h4 {
+h1, h2, h3, h4 {
   font-family: var(--font-display);
   font-weight: 600;
+  letter-spacing: -0.015em;
   margin: 0;
   letter-spacing: -0.02em;
   line-height: 1.05;
   color: var(--ink);
 }
-.display-italic {
-  font-style: italic;
-  font-weight: 600;
-}
+.display-italic { font-style: normal; font-weight: 600; }
 
-.mono {
-  font-family: var(--font-mono);
-  font-feature-settings: "tnum";
-}
+.mono { font-family: var(--font-mono); font-feature-settings: "tnum"; }
 .eyebrow {
   font-family: var(--font-mono);
   text-transform: uppercase;
@@ -212,6 +191,7 @@ h4 {
    Components
    ============================================================ */
 
+/* Buttons */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -222,46 +202,21 @@ h4 {
   font-size: 14px;
   font-weight: 500;
   letter-spacing: -0.005em;
-  transition: transform 0.12s ease, background 0.15s ease, box-shadow 0.15s ease,
-    border-color 0.15s ease;
+  transition: transform 0.12s ease, background 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
   border: 1px solid transparent;
   white-space: nowrap;
 }
-.btn:active {
-  transform: translateY(1px);
-}
-.btn-primary {
-  background: var(--terracotta);
-  color: var(--paper);
-}
-.btn-primary:hover {
-  background: oklch(from var(--terracotta) calc(l - 0.05) c h);
-}
-.btn-ghost {
-  background: transparent;
-  color: var(--ink);
-  border-color: var(--line);
-}
-.btn-ghost:hover {
-  background: var(--paper-2);
-  border-color: var(--line-2);
-}
-.btn-ink {
-  background: var(--ink);
-  color: var(--paper);
-}
-.btn-ink:hover {
-  background: oklch(from var(--ink) calc(l + 0.05) c h);
-}
-.btn-sm {
-  padding: 8px 14px;
-  font-size: 13px;
-}
-.btn-lg {
-  padding: 16px 28px;
-  font-size: 16px;
-}
+.btn:active { transform: translateY(1px); }
+.btn-primary { background: var(--terracotta); color: var(--paper); }
+.btn-primary:hover { background: oklch(from var(--terracotta) calc(l - 0.05) c h); }
+.btn-ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+.btn-ghost:hover { background: var(--paper-2); border-color: var(--line-2); }
+.btn-ink { background: var(--ink); color: var(--paper); }
+.btn-ink:hover { background: oklch(from var(--ink) calc(l + 0.05) c h); }
+.btn-sm { padding: 8px 14px; font-size: 13px; }
+.btn-lg { padding: 16px 28px; font-size: 16px; }
 
+/* Input */
 .input {
   width: 100%;
   padding: 12px 14px;
@@ -291,6 +246,7 @@ h4 {
   font-family: var(--font-mono);
 }
 
+/* Card */
 .card {
   background: var(--paper);
   border: 1px solid var(--line);
@@ -298,6 +254,7 @@ h4 {
   box-shadow: var(--shadow-sm);
 }
 
+/* Badge */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -313,15 +270,14 @@ h4 {
   background: oklch(from currentColor l c h / 0.08);
 }
 .badge .dot {
-  width: 6px;
-  height: 6px;
+  width: 6px; height: 6px;
   border-radius: 50%;
   background: currentColor;
 }
 
+/* Avatar */
 .avatar {
-  width: 32px;
-  height: 32px;
+  width: 32px; height: 32px;
   border-radius: 50%;
   background: var(--paper-3);
   border: 2px solid var(--paper);
@@ -336,23 +292,21 @@ h4 {
   overflow: hidden;
   position: relative;
 }
-.avatar-stack {
-  display: inline-flex;
-}
-.avatar-stack .avatar:not(:first-child) {
-  margin-left: -8px;
-}
+.avatar-stack { display: inline-flex; }
+.avatar-stack .avatar:not(:first-child) { margin-left: -8px; }
 
+/* Image placeholder — striped + caption */
 .imgph {
   position: relative;
   border-radius: var(--r-md);
-  background: repeating-linear-gradient(
-    135deg,
-    var(--paper-3) 0px,
-    var(--paper-3) 1px,
-    var(--paper-2) 1px,
-    var(--paper-2) 14px
-  );
+  background:
+    repeating-linear-gradient(
+      135deg,
+      var(--paper-3) 0px,
+      var(--paper-3) 1px,
+      var(--paper-2) 1px,
+      var(--paper-2) 14px
+    );
   border: 1px solid var(--line);
   overflow: hidden;
   display: flex;
@@ -380,37 +334,17 @@ h4 {
   font-size: 10px;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-.fade-in {
-  animation: fadeIn 0.25s ease both;
-}
+/* Subtle motion */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.fade-in { animation: fadeIn 0.25s ease both; }
 
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-::-webkit-scrollbar-thumb {
-  background: var(--line-2);
-  border-radius: 999px;
-  border: 2px solid var(--paper);
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 999px; border: 2px solid var(--paper); }
+::-webkit-scrollbar-track { background: transparent; }
 
-.hide-on-mobile {
-}
+/* Helpers */
+.hide-on-mobile { }
 @media (max-width: 720px) {
-  .hide-on-mobile {
-    display: none !important;
-  }
+  .hide-on-mobile { display: none !important; }
 }
