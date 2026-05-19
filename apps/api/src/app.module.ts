@@ -8,6 +8,7 @@ import { ItineraryModule } from "./modules/itinerary/itinerary.module";
 import { VotesModule } from "./modules/votes/votes.module";
 import { ExpensesModule } from "./modules/expenses/expenses.module";
 import { AiModule } from "./modules/ai/ai.module";
+import { ChatModule } from "./modules/chat/chat.module";
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { AiModule } from "./modules/ai/ai.module";
     VotesModule,
     ExpensesModule,
     AiModule,
+    ChatModule,
   ],
 })
 export class AppModule {}

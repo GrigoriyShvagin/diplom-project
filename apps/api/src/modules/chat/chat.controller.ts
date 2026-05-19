@@ -1,0 +1,25 @@
+import { Body, Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
+import { CurrentUser, type AuthUser } from "../../common/current-user.decorator";
+import { JwtAuthGuard } from "../auth/jwt-auth.guard";
+import { CreateMessageDto } from "./dto/message.dto";
+import { ChatService } from "./chat.service";
+
+@Controller("trips/:tripId/chat")
+@UseGuards(JwtAuthGuard)
+export class ChatController {
+  constructor(private readonly chat: ChatService) {}
+
+  @Get("messages")
+  list(@Param("tripId") tripId: string, @CurrentUser() user: AuthUser) {
+    return this.chat.list(tripId, user.id);
+  }
+
+  @Post("messages")
+  send(
+    @Param("tripId") tripId: string,
+    @Body() dto: CreateMessageDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.chat.send(tripId, user.id, dto);
+  }
+}

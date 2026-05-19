@@ -1,26 +1,14 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
-import { CurrentUser, type AuthUser } from "../../common/current-user.decorator";
+import { Controller, Get, UseGuards } from "@nestjs/common";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
-import { AskGuideDto } from "./dto/ask.dto";
 import { AiService } from "./ai.service";
 
-@Controller()
+@Controller("ai")
 @UseGuards(JwtAuthGuard)
 export class AiController {
   constructor(private readonly ai: AiService) {}
 
-  @Get("ai/status")
+  @Get("status")
   status() {
     return { enabled: this.ai.isEnabled() };
-  }
-
-  @Post("trips/:tripId/chat/ask")
-  async ask(
-    @Param("tripId") tripId: string,
-    @Body() dto: AskGuideDto,
-    @CurrentUser() user: AuthUser,
-  ) {
-    const reply = await this.ai.askGuide(tripId, user.id, dto);
-    return { reply };
   }
 }

@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useMemo,
   useRef,
   useState,
   type CSSProperties,
@@ -7,113 +8,12 @@ import {
   type ChangeEvent,
   type ReactNode,
 } from "react";
-import { MEMBERS } from "@/shared/lib/demo";
-import { Avatar, AvatarStack } from "@/shared/ui/Avatar";
-import { askGuide } from "@/shared/api/ai";
-import { ApiError } from "@/shared/api/client";
-
-type ChatMessage = {
-  id: string;
-  author: string;
-  time: string;
-  date: string;
-  text: string;
-  isBot?: boolean;
-};
-
-const SEED_MESSAGES: ChatMessage[] = [
-  {
-    id: "s1",
-    author: "m1",
-    time: "09:12",
-    date: "вчера",
-    text: "ребята, как насчёт ночёвки в Сигнахи на второй день? там вино и виды",
-  },
-  { id: "s2", author: "m2", time: "09:14", date: "вчера", text: "за 🍷" },
-  {
-    id: "s3",
-    author: "m3",
-    time: "09:21",
-    date: "вчера",
-    text: "@гид что можно успеть посмотреть в Сигнахи за полдня и где недорого поесть?",
-  },
-  {
-    id: "s4",
-    author: "bot",
-    time: "09:21",
-    date: "вчера",
-    isBot: true,
-    text: "В Сигнахи за полдня успеете прогуляться по крепостной стене и дойти до монастыря Бодбе. Это около 4–5 часов с обедом.\n\n**Места:**\n- Крепостная стена Сигнахи — закат отсюда самый красивый\n- Монастырь Бодбе и могила Святой Нино — 15 мин на машине\n- Смотровая на дом-музей Пиросмани\n\n**Поесть до 600₽/чел:**\n- Pheasant's Tears — авторская кухня, винодельня при ресторане\n- Кахетинский Дом — домашняя кухня, хинкали и мцвади\n- Bistro Old Signagi — лёгкий обед на главной\n\nПо бюджету — закладывайте ≈3 200₽ на четверых на обед и ≈1 200₽ на дегустацию.",
-  },
-  {
-    id: "s5",
-    author: "me",
-    time: "10:02",
-    date: "вчера",
-    text: "🔥 беру Pheasant's Tears на радар",
-  },
-  {
-    id: "s6",
-    author: "m4",
-    time: "11:48",
-    date: "вчера",
-    text: "к слову — чьё-то такси из аэропорта 1 800₽ помните положить в общий?",
-  },
-  {
-    id: "s7",
-    author: "m1",
-    time: "12:30",
-    date: "вчера",
-    text: "да, я добавлю в бюджет вечером",
-  },
-  {
-    id: "s8",
-    author: "m2",
-    time: "08:05",
-    date: "сегодня",
-    text: "@гид по 4 ужинам в Тбилиси — где НЕ туристично, чтоб не потратить 5к на человека? и предложи на чём сэкономить",
-  },
-  {
-    id: "s9",
-    author: "bot",
-    time: "08:05",
-    date: "сегодня",
-    isBot: true,
-    text: "Глядя на ваш текущий бюджет (38 540₽ на 4 человек на 3 дня — это ~3 211₽/чел/день, что ок), могу подсказать как пройти 4 ужина и не разогнаться:\n\n**Ужины без туристической наценки:**\n- Самикитно на Мейдане — местные туда ходят, средний чек 800₽\n- Шавi Lomi — современная грузинская, но в районе Сабуртало\n- Хинкальная Велиаминова — у вас уже в плане, держите ✓\n- Винный бар Vino Underground — тапас + бокал, 700–900₽/чел\n\n**Где можно срезать:**\n- Вместо такси из аэропорта — автобус 37, 60₽/чел вместо 1 800₽ на всех\n- Купить sim-карту Beeline в первый день — 200₽ вместо роуминга\n- Завтраки в гестхаусе или хачапури в кафе — экономия ≈400₽/чел/день\n\nИтого можно сэкономить около **6 000₽ на группу** за 3 дня.",
-  },
-  {
-    id: "s10",
-    author: "m3",
-    time: "08:14",
-    date: "сегодня",
-    text: "автобус 37 — golden tip 🚌",
-  },
-];
-
-const NO_KEY_REPLY =
-  "AI-гид не настроен на сервере. Добавьте `ANTHROPIC_API_KEY` в `apps/api/.env` и перезапустите API.";
-
-async function askGuideViaApi(
-  tripId: string,
-  question: string,
-  history: ChatMessage[],
-): Promise<string> {
-  try {
-    const recentMessages = history.slice(-12).map((m) => {
-      const member = MEMBERS.find((x) => x.id === m.author);
-      const author = m.isBot ? "Гид" : (member?.name ?? m.author);
-      return { author, text: m.text, isBot: m.isBot };
-    });
-    const { reply } = await askGuide(tripId, { question, recentMessages });
-    return reply;
-  } catch (err) {
-    if (err instanceof ApiError) {
-      if (err.status === 503) return NO_KEY_REPLY;
-      return `Не удалось получить ответ (${err.status}). Попробуйте ещё раз.`;
-    }
-    return "Связь не дошла до меня — попробуйте через минуту.";
-  }
-}
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/shared/lib/auth-context";
+import { Avatar } from "@/shared/ui/Avatar";
+import { UserAvatar, UserAvatarStack } from "@/shared/ui/UserAvatar";
+import { listMessages, sendMessage, type ApiAuthor, type ApiMessage } from "@/shared/api/chat";
+import { getTrip } from "@/shared/api/trips";
 
 const iconBtn: CSSProperties = {
   width: 32,
@@ -129,106 +29,63 @@ const iconBtn: CSSProperties = {
   cursor: "pointer",
 };
 
-const pillBtn: CSSProperties = {
-  padding: "5px 10px",
-  borderRadius: 999,
-  background: "var(--paper-2)",
-  border: "1px solid var(--line)",
-  color: "var(--ink-2)",
-  fontSize: 11,
-  fontFamily: "var(--font-mono)",
-  letterSpacing: "0.04em",
-};
-
-const inviteShareBtn: CSSProperties = {
-  padding: "7px 10px",
-  borderRadius: 6,
-  background: "var(--paper-2)",
-  border: "1px solid var(--line)",
-  color: "var(--ink)",
-  fontSize: 12,
-};
+const GUIDE_RE = /@гид(?![а-яА-ЯёЁ])/i;
 
 export function ChatTab({ tripId }: { tripId: string }) {
-  const [messages, setMessages] = useState<ChatMessage[]>(SEED_MESSAGES);
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  const messagesKey = ["trips", tripId, "messages"] as const;
+
+  const messagesQuery = useQuery({
+    queryKey: messagesKey,
+    queryFn: () => listMessages(tripId),
+  });
+  const tripQuery = useQuery({
+    queryKey: ["trips", tripId] as const,
+    queryFn: () => getTrip(tripId),
+  });
+
+  const messages = useMemo(
+    () => messagesQuery.data ?? [],
+    [messagesQuery.data],
+  );
+  const tripMembers = tripQuery.data?.members ?? [];
+
   const [input, setInput] = useState("");
-  const [thinking, setThinking] = useState(false);
   const [showMentions, setShowMentions] = useState(false);
   const [railOpen, setRailOpen] = useState(false);
-  const [inviteOpen, setInviteOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const inviteAnchorRef = useRef<HTMLDivElement | null>(null);
+  const [transientError, setTransientError] = useState<string | null>(null);
+  const [thinking, setThinking] = useState(false);
   const listRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!inviteOpen) return;
-    const onDocDown = (e: MouseEvent) => {
-      if (
-        inviteAnchorRef.current &&
-        !inviteAnchorRef.current.contains(e.target as Node)
-      ) {
-        setInviteOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", onDocDown);
-    return () => document.removeEventListener("mousedown", onDocDown);
-  }, [inviteOpen]);
 
   useEffect(() => {
     if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
   }, [messages, thinking]);
 
-  const inviteLink = "journey.app/j/tk-3b9f";
-  const copyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(inviteLink);
-    } catch {
-      // no-op
-    }
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  };
+  const sendMutation = useMutation({
+    mutationFn: (text: string) => sendMessage(tripId, text),
+    onSuccess: (result) => {
+      queryClient.setQueryData<ApiMessage[]>(messagesKey, (prev) =>
+        prev ? [...prev, ...result.messages] : result.messages,
+      );
+      if (result.aiError) {
+        setTransientError(result.aiError);
+        setTimeout(() => setTransientError(null), 6000);
+      }
+    },
+    onError: (err: unknown) => {
+      setTransientError(err instanceof Error ? err.message : "Не удалось отправить сообщение");
+    },
+    onSettled: () => setThinking(false),
+  });
 
   const send = async () => {
     const txt = input.trim();
-    if (!txt || thinking) return;
-    const time = new Date().toLocaleTimeString("ru-RU", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-    const myMsg: ChatMessage = {
-      id: `m${Date.now()}`,
-      author: "me",
-      time,
-      date: "сейчас",
-      text: txt,
-    };
-    setMessages((prev) => [...prev, myMsg]);
+    if (!txt || sendMutation.isPending) return;
     setInput("");
-
-    if (/@гид\b/i.test(txt)) {
-      setThinking(true);
-      try {
-        const reply = await askGuideViaApi(tripId, txt, [...messages, myMsg]);
-        const botTime = new Date().toLocaleTimeString("ru-RU", {
-          hour: "2-digit",
-          minute: "2-digit",
-        });
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: `b${Date.now()}`,
-            author: "bot",
-            time: botTime,
-            date: "сейчас",
-            isBot: true,
-            text: reply,
-          },
-        ]);
-      } finally {
-        setThinking(false);
-      }
-    }
+    setTransientError(null);
+    if (GUIDE_RE.test(txt)) setThinking(true);
+    sendMutation.mutate(txt);
   };
 
   const onKey = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -249,16 +106,19 @@ export function ChatTab({ tripId }: { tripId: string }) {
     setShowMentions(false);
   };
 
-  type GroupedEntry = ChatMessage | { divider: string };
-  const grouped: GroupedEntry[] = [];
+  type Entry = ApiMessage | { divider: string; id: string };
+  const grouped: Entry[] = [];
   let lastDate: string | null = null;
-  messages.forEach((m) => {
-    if (m.date !== lastDate) {
-      grouped.push({ divider: m.date });
-      lastDate = m.date;
+  for (const m of messages) {
+    const label = dateLabel(m.createdAt);
+    if (label !== lastDate) {
+      grouped.push({ divider: label, id: `div-${label}-${m.id}` });
+      lastDate = label;
     }
     grouped.push(m);
-  });
+  }
+
+  const myId = auth.user?.id;
 
   return (
     <div
@@ -298,11 +158,11 @@ export function ChatTab({ tripId }: { tripId: string }) {
             flexShrink: 0,
           }}
         >
-          Гр
+          {(tripQuery.data?.title?.slice(0, 2) ?? "Гр").trim()}
         </span>
         <div style={{ flex: 1, minWidth: 0, lineHeight: 1.2 }}>
           <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>
-            Поездка в Грузию
+            {tripQuery.data?.title ?? "Чат поездки"}
           </div>
           <div
             style={{
@@ -313,7 +173,7 @@ export function ChatTab({ tripId }: { tripId: string }) {
               gap: 6,
             }}
           >
-            <span>4 участника</span>
+            <span>{tripMembers.length} участников</span>
             <span
               style={{
                 width: 3,
@@ -335,176 +195,18 @@ export function ChatTab({ tripId }: { tripId: string }) {
             </span>
           </div>
         </div>
-        <div ref={inviteAnchorRef} style={{ position: "relative" }}>
-          <button
-            onClick={() => setInviteOpen((v) => !v)}
-            title="Участники и приглашение"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              padding: "4px 8px 4px 6px",
-              borderRadius: 999,
-              background: inviteOpen ? "var(--paper-2)" : "transparent",
-              transition: "background 0.12s",
-            }}
-            onMouseEnter={(e) => {
-              if (!inviteOpen) e.currentTarget.style.background = "var(--paper-2)";
-            }}
-            onMouseLeave={(e) => {
-              if (!inviteOpen) e.currentTarget.style.background = "transparent";
-            }}
-          >
-            <AvatarStack ids={["m1", "m2", "m3", "m4", "me"]} size={24} max={5} />
-            <span style={{ fontSize: 11, color: "var(--ink-3)", marginLeft: 2 }}>▾</span>
-          </button>
-
-          {inviteOpen && (
-            <div
-              style={{
-                position: "absolute",
-                top: "calc(100% + 8px)",
-                right: 0,
-                width: 300,
-                zIndex: 10,
-                background: "var(--paper)",
-                border: "1px solid var(--line)",
-                borderRadius: 12,
-                boxShadow: "var(--shadow-md)",
-                overflow: "hidden",
-              }}
-            >
-              <div style={{ padding: "10px 6px 6px" }}>
-                <div
-                  style={{
-                    padding: "0 10px 6px",
-                    fontSize: 11,
-                    color: "var(--ink-3)",
-                    display: "flex",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <span>Участники</span>
-                  <span>5</span>
-                </div>
-                {(
-                  [
-                    { id: "m1", role: "организатор" },
-                    { id: "m2", role: "участник" },
-                    { id: "m3", role: "участник" },
-                    { id: "m4", role: "участник" },
-                    { id: "me", role: "вы" },
-                  ] as const
-                ).map((p) => {
-                  const m = MEMBERS.find((x) => x.id === p.id);
-                  return (
-                    <div
-                      key={p.id}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 10,
-                        padding: "6px 10px",
-                        borderRadius: 8,
-                      }}
-                    >
-                      <Avatar id={p.id} size={26} ring={false} />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13, color: "var(--ink)" }}>{m?.name}</div>
-                        <div style={{ fontSize: 11, color: "var(--ink-3)" }}>{p.role}</div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div style={{ height: 1, background: "var(--line)" }} />
-
-              <div
-                style={{
-                  padding: "10px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 8,
-                }}
-              >
-                <div style={{ fontSize: 11, color: "var(--ink-3)", padding: "0 2px" }}>
-                  Пригласить друга
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                    padding: "6px 6px 6px 10px",
-                    background: "var(--paper-2)",
-                    borderRadius: 8,
-                    border: "1px solid var(--line)",
-                  }}
-                >
-                  <span
-                    className="mono"
-                    style={{
-                      flex: 1,
-                      fontSize: 12,
-                      color: "var(--ink-2)",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {inviteLink}
-                  </span>
-                  <button
-                    onClick={copyLink}
-                    style={{
-                      padding: "5px 10px",
-                      borderRadius: 6,
-                      background: copied ? "var(--moss)" : "var(--ink)",
-                      color: "var(--paper)",
-                      fontSize: 11,
-                      fontWeight: 500,
-                      transition: "background 0.15s",
-                    }}
-                  >
-                    {copied ? "Скопировано ✓" : "Копировать"}
-                  </button>
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-                  <button style={inviteShareBtn}>Telegram</button>
-                  <button style={inviteShareBtn}>Email</button>
-                </div>
-                <button
-                  style={{
-                    ...inviteShareBtn,
-                    background: "var(--terracotta)",
-                    color: "var(--paper)",
-                    border: "none",
-                    marginTop: 2,
-                  }}
-                >
-                  + Добавить по имени
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+        <UserAvatarStack users={tripMembers.map((m) => m.user)} size={24} max={5} />
         {!railOpen && (
           <button onClick={() => setRailOpen(true)} title="Контекст гида" style={iconBtn}>
             ☰
           </button>
         )}
-        <button title="Настройки" style={iconBtn}>
-          ⋯
-        </button>
       </div>
 
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: railOpen
-            ? "minmax(0, 1fr) 300px"
-            : "minmax(0, 1fr)",
+          gridTemplateColumns: railOpen ? "minmax(0, 1fr) 300px" : "minmax(0, 1fr)",
           flex: 1,
           minHeight: 0,
           transition: "grid-template-columns 0.25s ease",
@@ -530,10 +232,41 @@ export function ChatTab({ tripId }: { tripId: string }) {
               gap: 8,
             }}
           >
-            {grouped.map((entry, i) =>
+            {messagesQuery.isLoading && (
+              <div
+                className="mono"
+                style={{
+                  textAlign: "center",
+                  color: "var(--ink-3)",
+                  fontSize: 12,
+                  padding: 24,
+                }}
+              >
+                загрузка истории…
+              </div>
+            )}
+
+            {messagesQuery.isSuccess && messages.length === 0 && (
+              <div
+                style={{
+                  textAlign: "center",
+                  padding: "40px 24px",
+                  color: "var(--ink-3)",
+                  fontSize: 13,
+                }}
+              >
+                Чат пустой. Напишите первое сообщение или попросите{" "}
+                <span style={{ color: "var(--terracotta)", fontFamily: "var(--font-mono)" }}>
+                  @гид
+                </span>{" "}
+                подсказать что-нибудь.
+              </div>
+            )}
+
+            {grouped.map((entry) =>
               "divider" in entry ? (
                 <div
-                  key={`d-${i}`}
+                  key={entry.id}
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -556,10 +289,23 @@ export function ChatTab({ tripId }: { tripId: string }) {
                   <div style={{ flex: 1, height: 1, background: "var(--line)" }} />
                 </div>
               ) : (
-                <Message key={entry.id} m={entry} />
+                <Message key={entry.id} m={entry} isMe={Boolean(myId) && entry.author?.id === myId} />
               ),
             )}
             {thinking && <BotThinking />}
+            {transientError && (
+              <div
+                className="field-error"
+                style={{
+                  textAlign: "center",
+                  padding: "8px 12px",
+                  background: "oklch(from var(--terracotta) l c h / 0.08)",
+                  borderRadius: "var(--r-md)",
+                }}
+              >
+                {transientError}
+              </div>
+            )}
           </div>
 
           <div
@@ -571,75 +317,13 @@ export function ChatTab({ tripId }: { tripId: string }) {
             }}
           >
             {showMentions && (
-              <div
-                style={{
-                  position: "absolute",
-                  bottom: "calc(100% - 4px)",
-                  left: 16,
-                  background: "var(--paper)",
-                  border: "1px solid var(--line)",
-                  borderRadius: "var(--r-md)",
-                  boxShadow: "var(--shadow-md)",
-                  overflow: "hidden",
-                  minWidth: 220,
-                  zIndex: 5,
-                }}
-              >
-                <div
-                  className="eyebrow"
-                  style={{ padding: "8px 12px", borderBottom: "1px solid var(--line)" }}
-                >
-                  упомянуть
-                </div>
-                {(
-                  [
-                    {
-                      id: "bot",
-                      handle: "гид",
-                      sub: "AI-помощник · решения, места, бюджет",
-                    },
-                    { id: "m1", handle: "Аня", sub: "организатор" },
-                    { id: "m2", handle: "Лёша", sub: "" },
-                    { id: "m3", handle: "Маша", sub: "" },
-                  ] as const
-                ).map((o) => (
-                  <button
-                    key={o.id}
-                    onClick={() => insertMention(o.handle)}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 10,
-                      padding: "8px 12px",
-                      width: "100%",
-                      textAlign: "left",
-                      transition: "background 0.12s",
-                    }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.background = "var(--paper-2)")
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.background = "transparent")
-                    }
-                  >
-                    <Avatar id={o.id} size={26} ring={false} />
-                    <div>
-                      <div style={{ fontSize: 13, fontWeight: 500 }}>@{o.handle}</div>
-                      {o.sub && (
-                        <div
-                          className="mono"
-                          style={{ fontSize: 10, color: "var(--ink-3)" }}
-                        >
-                          {o.sub}
-                        </div>
-                      )}
-                    </div>
-                  </button>
-                ))}
-              </div>
+              <MentionPopup
+                tripMembers={tripMembers.map((m) => m.user)}
+                onPick={insertMention}
+              />
             )}
             <div style={{ display: "flex", gap: 10, alignItems: "flex-end" }}>
-              <Avatar id="me" size={32} ring={false} />
+              {auth.user && <UserAvatar user={auth.user} size={32} ring={false} />}
               <div style={{ flex: 1, position: "relative" }}>
                 <textarea
                   value={input}
@@ -647,6 +331,7 @@ export function ChatTab({ tripId }: { tripId: string }) {
                   onKeyDown={onKey}
                   placeholder="Напишите сообщение или @гид для подсказки…"
                   rows={1}
+                  disabled={sendMutation.isPending}
                   style={{
                     width: "100%",
                     padding: "10px 14px",
@@ -661,17 +346,10 @@ export function ChatTab({ tripId }: { tripId: string }) {
                     minHeight: 44,
                     maxHeight: 140,
                     lineHeight: 1.5,
+                    opacity: sendMutation.isPending ? 0.6 : 1,
                   }}
                 />
-                <div
-                  style={{
-                    position: "absolute",
-                    right: 10,
-                    bottom: 8,
-                    display: "flex",
-                    gap: 4,
-                  }}
-                >
+                <div style={{ position: "absolute", right: 10, bottom: 8, display: "flex", gap: 4 }}>
                   <button
                     onClick={() => {
                       setInput((prev) => prev + "@гид ");
@@ -695,13 +373,13 @@ export function ChatTab({ tripId }: { tripId: string }) {
               <button
                 className="btn btn-primary"
                 onClick={() => void send()}
-                disabled={thinking || !input.trim()}
+                disabled={sendMutation.isPending || !input.trim()}
                 style={{
                   padding: "10px 16px",
-                  opacity: !input.trim() || thinking ? 0.4 : 1,
+                  opacity: !input.trim() || sendMutation.isPending ? 0.4 : 1,
                 }}
               >
-                {thinking ? "…" : "Отправить"}
+                {sendMutation.isPending ? "…" : "Отправить"}
               </button>
             </div>
             <div
@@ -719,18 +397,82 @@ export function ChatTab({ tripId }: { tripId: string }) {
           </div>
         </div>
 
-        {railOpen && (
-          <ContextRail messages={messages} onClose={() => setRailOpen(false)} />
-        )}
+        {railOpen && <ContextRail messages={messages} onClose={() => setRailOpen(false)} />}
       </div>
     </div>
   );
 }
 
-function Message({ m }: { m: ChatMessage }) {
-  const member =
-    MEMBERS.find((x) => x.id === m.author) ?? { name: "Гид", initials: "Г", color: "" };
-  const isMe = m.author === "me";
+function MentionPopup({
+  tripMembers,
+  onPick,
+}: {
+  tripMembers: ApiAuthor[];
+  onPick: (handle: string) => void;
+}) {
+  const items: { id: string; handle: string; sub: string }[] = [
+    { id: "bot", handle: "гид", sub: "AI-помощник · решения, места, бюджет" },
+    ...tripMembers.map((u) => ({ id: u.id, handle: u.name.split(/\s+/)[0] ?? u.name, sub: "" })),
+  ];
+  return (
+    <div
+      style={{
+        position: "absolute",
+        bottom: "calc(100% - 4px)",
+        left: 16,
+        background: "var(--paper)",
+        border: "1px solid var(--line)",
+        borderRadius: "var(--r-md)",
+        boxShadow: "var(--shadow-md)",
+        overflow: "hidden",
+        minWidth: 220,
+        zIndex: 5,
+      }}
+    >
+      <div className="eyebrow" style={{ padding: "8px 12px", borderBottom: "1px solid var(--line)" }}>
+        упомянуть
+      </div>
+      {items.map((o) => (
+        <button
+          key={o.id}
+          onClick={() => onPick(o.handle)}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            padding: "8px 12px",
+            width: "100%",
+            textAlign: "left",
+            transition: "background 0.12s",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = "var(--paper-2)")}
+          onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+        >
+          {o.id === "bot" ? (
+            <Avatar id="bot" size={26} ring={false} />
+          ) : (
+            <UserAvatar
+              user={{ id: o.id, name: o.handle, avatarUrl: null }}
+              size={26}
+              ring={false}
+            />
+          )}
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 500 }}>@{o.handle}</div>
+            {o.sub && (
+              <div className="mono" style={{ fontSize: 10, color: "var(--ink-3)" }}>
+                {o.sub}
+              </div>
+            )}
+          </div>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function Message({ m, isMe }: { m: ApiMessage; isMe: boolean }) {
+  const time = timeOf(m.createdAt);
 
   if (m.isBot) {
     return (
@@ -748,9 +490,7 @@ function Message({ m }: { m: ChatMessage }) {
       >
         <BotAvatar />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div
-            style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 6 }}
-          >
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 6 }}>
             <span style={{ fontWeight: 600, fontSize: 14 }}>Гид</span>
             <span
               className="badge"
@@ -760,20 +500,16 @@ function Message({ m }: { m: ChatMessage }) {
               AI
             </span>
             <span className="mono" style={{ fontSize: 11, color: "var(--ink-3)" }}>
-              {m.time}
+              {time}
             </span>
           </div>
           <BotMessage text={m.text} />
-          <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-            <button style={pillBtn}>👍 полезно</button>
-            <button style={pillBtn}>📌 закрепить</button>
-            <button style={pillBtn}>↗ в маршрут</button>
-          </div>
         </div>
       </div>
     );
   }
 
+  const authorName = m.author?.name ?? "?";
   return (
     <div
       style={{
@@ -783,12 +519,12 @@ function Message({ m }: { m: ChatMessage }) {
         flexDirection: isMe ? "row-reverse" : "row",
       }}
     >
-      {!isMe && <Avatar id={m.author} size={28} ring={false} />}
+      {!isMe && m.author && <UserAvatar user={m.author} size={28} ring={false} />}
       {isMe && <span style={{ width: 28 }} />}
       <div
         style={{
           maxWidth: "70%",
-          padding: "6px 12px 6px 12px",
+          padding: "6px 12px",
           background: isMe ? "var(--terracotta)" : "var(--paper)",
           color: isMe ? "var(--paper)" : "var(--ink)",
           borderRadius: 14,
@@ -807,11 +543,11 @@ function Message({ m }: { m: ChatMessage }) {
             style={{
               fontSize: 12,
               fontWeight: 600,
-              color: member.color || "var(--terracotta)",
+              color: "var(--terracotta)",
               marginBottom: 1,
             }}
           >
-            {member.name}
+            {authorName}
           </div>
         )}
         <span>{renderInlineMentions(m.text)}</span>
@@ -825,7 +561,7 @@ function Message({ m }: { m: ChatMessage }) {
             marginTop: 4,
           }}
         >
-          {m.time}
+          {time}
         </span>
       </div>
     </div>
@@ -864,14 +600,7 @@ function BotAvatar() {
 
 function BotThinking() {
   return (
-    <div
-      style={{
-        display: "flex",
-        gap: 12,
-        alignItems: "center",
-        padding: "8px 16px",
-      }}
-    >
+    <div style={{ display: "flex", gap: 12, alignItems: "center", padding: "8px 16px" }}>
       <BotAvatar />
       <div
         style={{
@@ -1031,7 +760,7 @@ function ContextRail({
   messages,
   onClose,
 }: {
-  messages: ChatMessage[];
+  messages: ApiMessage[];
   onClose: () => void;
 }) {
   const pinned = messages.filter((m) => m.isBot).slice(-1);
@@ -1044,12 +773,12 @@ function ContextRail({
         minHeight: 0,
         overflow: "auto",
         position: "relative",
+        padding: "12px 16px 16px",
       }}
     >
       <button
         onClick={onClose}
         title="Скрыть"
-        aria-label="Скрыть панель"
         style={{
           position: "absolute",
           top: 8,
@@ -1072,12 +801,7 @@ function ContextRail({
       </button>
       <div
         className="card"
-        style={{
-          padding: 16,
-          background: "var(--ink)",
-          color: "var(--paper)",
-          border: "none",
-        }}
+        style={{ padding: 16, background: "var(--ink)", color: "var(--paper)", border: "none" }}
       >
         <div className="eyebrow" style={{ color: "oklch(0.65 0.012 65)", marginBottom: 10 }}>
           что знает гид
@@ -1091,26 +815,29 @@ function ContextRail({
             color: "oklch(0.85 0.012 65)",
           }}
         >
-          <li>текущий маршрут (3 дня запланировано)</li>
-          <li>состав группы (4 человека)</li>
-          <li>бюджет: 38 540₽ потрачено</li>
-          <li>последние 20 сообщений в чате</li>
+          <li>состав группы и роли</li>
+          <li>маршрут (дни, время, пункты)</li>
+          <li>бюджет и кто за что платил</li>
+          <li>последние ~12 сообщений в чате</li>
         </ul>
       </div>
 
       <div className="card" style={{ padding: 16 }}>
         <div className="eyebrow" style={{ marginBottom: 10 }}>
-          идеи от гида
+          последняя идея от гида
         </div>
         {pinned.length > 0 ? (
-          <div style={{ fontSize: 12, lineHeight: 1.5, color: "var(--ink-2)" }}>
-            <div style={{ fontWeight: 500, color: "var(--ink)", marginBottom: 6 }}>
-              Срезать ≈6 000₽ за 3 дня
-            </div>
-            <div>
-              автобус 37 из аэропорта вместо такси · sim Beeline · завтраки в гестхаусе
-            </div>
-            <button style={{ ...pillBtn, marginTop: 10 }}>применить к бюджету →</button>
+          <div
+            style={{
+              fontSize: 12,
+              lineHeight: 1.5,
+              color: "var(--ink-2)",
+              maxHeight: 240,
+              overflow: "auto",
+            }}
+          >
+            {pinned[0]!.text.slice(0, 400)}
+            {pinned[0]!.text.length > 400 && "…"}
           </div>
         ) : (
           <div className="mono" style={{ fontSize: 11, color: "var(--ink-3)" }}>
@@ -1126,9 +853,9 @@ function ContextRail({
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {[
             "@гид что сделать в дождливый день?",
-            "@гид раздели расход 4 800₽ только между Аней и Лёшей",
-            "@гид найди винодельни рядом с Сигнахи",
-            "@гид что не успеваем, если убрать день в Кахетии?",
+            "@гид что съесть кроме хинкали?",
+            "@гид сколько займёт дорога Тбилиси → Казбеги?",
+            "@гид найди винодельни в Кахетии",
           ].map((s) => (
             <button
               key={s}
@@ -1141,15 +868,6 @@ function ContextRail({
                 textAlign: "left",
                 lineHeight: 1.4,
                 border: "1px solid var(--line)",
-                transition: "background 0.12s, border-color 0.12s",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "var(--terracotta)";
-                e.currentTarget.style.color = "var(--ink)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "var(--line)";
-                e.currentTarget.style.color = "var(--ink-2)";
               }}
             >
               {s}
@@ -1159,4 +877,41 @@ function ContextRail({
       </div>
     </div>
   );
+}
+
+function timeOf(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+}
+
+function dateLabel(iso: string): string {
+  const d = new Date(iso);
+  const now = new Date();
+  const sameDay =
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate();
+  if (sameDay) return "сегодня";
+  const y = new Date(now);
+  y.setDate(now.getDate() - 1);
+  const isYesterday =
+    d.getFullYear() === y.getFullYear() &&
+    d.getMonth() === y.getMonth() &&
+    d.getDate() === y.getDate();
+  if (isYesterday) return "вчера";
+  const months = [
+    "янв",
+    "фев",
+    "мар",
+    "апр",
+    "мая",
+    "июн",
+    "июл",
+    "авг",
+    "сен",
+    "окт",
+    "ноя",
+    "дек",
+  ];
+  return `${d.getDate()} ${months[d.getMonth()]}`;
 }
