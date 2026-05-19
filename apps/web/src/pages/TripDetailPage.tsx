@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useT } from "@/shared/lib/i18n";
-import { ACTIVE_TRIP, type Expense } from "@/shared/lib/demo";
 import { Logo } from "@/shared/ui/Logo";
 import { LangSwitcher } from "@/shared/ui/LangSwitcher";
 import { useAuth } from "@/shared/lib/auth-context";
@@ -18,7 +17,6 @@ import { VotesTab } from "@/features/trip/VotesTab";
 import { BudgetTab } from "@/features/trip/BudgetTab";
 import { MembersTab } from "@/features/trip/MembersTab";
 import { FinalTab } from "@/features/trip/FinalTab";
-import { AddExpenseModal } from "@/features/trip/AddExpenseModal";
 
 type TabId =
   | "chat"
@@ -44,9 +42,6 @@ export function TripDetailPage() {
   });
 
   const [tab, setTab] = useState<TabId>("itin");
-  // mocked data still used by tabs not yet on real API
-  const [expenses, setExpenses] = useState<Expense[]>(ACTIVE_TRIP.expenses);
-  const [expenseModal, setExpenseModal] = useState(false);
 
   const tabs: { id: TabId; label: string }[] = [
     { id: "chat", label: "Чат" },
@@ -58,21 +53,6 @@ export function TripDetailPage() {
     { id: "members", label: t("trip.tab.members") },
     { id: "final", label: "Итоги" },
   ];
-
-  const addExpense = (e: { title: string; amount: number; payer: string; split: string[] }) => {
-    setExpenses([
-      {
-        id: `e${Date.now()}`,
-        title: e.title,
-        amount: e.amount,
-        payer: e.payer,
-        split: e.split,
-        date: "сегодня",
-      },
-      ...expenses,
-    ]);
-    setExpenseModal(false);
-  };
 
   if (tripQuery.isLoading) {
     return <CenteredNote text="загрузка…" />;
@@ -213,18 +193,10 @@ export function TripDetailPage() {
         {tab === "map" && <MapTab />}
         {tab === "itin" && <ItineraryTab tripId={tripId} />}
         {tab === "votes" && <VotesTab tripId={tripId} />}
-        {tab === "budget" && (
-          <BudgetTab expenses={expenses} onAdd={() => setExpenseModal(true)} />
-        )}
+        {tab === "budget" && <BudgetTab tripId={tripId} />}
         {tab === "members" && <MembersTab tripId={tripId} />}
         {tab === "final" && <FinalTab />}
       </main>
-
-      <AddExpenseModal
-        open={expenseModal}
-        onClose={() => setExpenseModal(false)}
-        onAdd={addExpense}
-      />
     </div>
   );
 }

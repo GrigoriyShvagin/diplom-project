@@ -1,55 +1,105 @@
-import { useEffect, useState } from "react";
+import { useState, type CSSProperties } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { useT } from "@/shared/lib/i18n";
-import { MEMBERS, ACTIVE_TRIP } from "@/shared/lib/demo";
+import { useAuth } from "@/shared/lib/auth-context";
 import { Modal } from "@/shared/ui/Modal";
-import { Avatar } from "@/shared/ui/Avatar";
+import { UserAvatar } from "@/shared/ui/UserAvatar";
+import { createExpense, type ApiExpense } from "@/shared/api/expenses";
+import type { ApiTripMember } from "@/shared/api/trips";
 
-export type NewExpense = {
+type FormState = {
   title: string;
-  amount: number;
-  payer: string;
+  amount: string;
+  payerId: string;
   split: string[];
 };
 
-const INITIAL = {
-  title: "",
-  amount: "",
-  payer: "me",
-  split: ["me", "m1", "m2", "m3"] as string[],
-};
+const chipStyle = (selected: boolean, accent: "ink" | "terracotta" = "ink"): CSSProperties => ({
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 8,
+  padding: "6px 12px 6px 6px",
+  borderRadius: "var(--r-pill)",
+  border: `1px solid ${
+    selected
+      ? accent === "terracotta"
+        ? "var(--terracotta)"
+        : "var(--ink)"
+      : "var(--line)"
+  }`,
+  background: selected
+    ? accent === "terracotta"
+      ? "oklch(from var(--terracotta) l c h / 0.1)"
+      : "var(--paper-2)"
+    : "var(--paper)",
+  fontSize: 13,
+  fontWeight: selected ? 500 : 400,
+  opacity: selected || accent === "terracotta" ? 1 : 0.7,
+});
 
 export function AddExpenseModal({
   open,
   onClose,
-  onAdd,
+  onCreated,
+  tripId,
+  members,
 }: {
   open: boolean;
   onClose: () => void;
-  onAdd: (e: NewExpense) => void;
+  onCreated: (expense: ApiExpense) => void;
+  tripId: string;
+  members: ApiTripMember[];
 }) {
   const { t } = useT();
-  const [form, setForm] = useState(INITIAL);
+  const auth = useAuth();
+  const defaultPayer = auth.user?.id ?? members[0]?.user.id ?? "";
+  const defaultSplit = members.map((m) => m.user.id);
+  const [form, setForm] = useState<FormState>({
+    title: "",
+    amount: "",
+    payerId: defaultPayer,
+    split: defaultSplit,
+  });
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (open) setForm(INITIAL);
-  }, [open]);
+  // re-init when the modal opens
+  const openKey = open ? `${defaultPayer}-${defaultSplit.join(",")}` : "";
+  const [seedKey, setSeedKey] = useState("");
+  if (openKey && openKey !== seedKey) {
+    setForm({
+      title: "",
+      amount: "",
+      payerId: defaultPayer,
+      split: defaultSplit,
+    });
+    setSeedKey(openKey);
+  }
 
   const toggleSplit = (id: string) => {
     setForm((f) => ({
       ...f,
-      split: f.split.includes(id) ? f.split.filter((x) => x !== id) : [...f.split, id],
+      split: f.split.includes(id)
+        ? f.split.filter((x) => x !== id)
+        : [...f.split, id],
     }));
   };
-  const valid = form.title.trim() && Number(form.amount) > 0 && form.split.length > 0;
-  const submit = () => {
-    onAdd({
-      title: form.title,
-      amount: Number(form.amount),
-      payer: form.payer,
-      split: form.split,
-    });
-  };
+
+  const mutation = useMutation({
+    mutationFn: () =>
+      createExpense(tripId, {
+        title: form.title.trim(),
+        amount: Number(form.amount),
+        payerId: form.payerId,
+        splitUserIds: form.split,
+      }),
+    onSuccess: (expense) => onCreated(expense),
+  });
+
+  const amountNum = Number(form.amount);
+  const valid =
+    form.title.trim().length > 0 &&
+    amountNum > 0 &&
+    form.split.length > 0 &&
+    members.some((m) => m.user.id === form.payerId);
 
   return (
     <Modal
@@ -73,6 +123,7 @@ export function AddExpenseModal({
           <input
             className="input"
             type="number"
+            inputMode="decimal"
             placeholder="0"
             value={form.amount}
             onChange={(e) => setForm({ ...form, amount: e.target.value })}
@@ -81,29 +132,16 @@ export function AddExpenseModal({
         <div>
           <label className="label">{t("trip.budget.payer")}</label>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            {ACTIVE_TRIP.members.map((id) => {
-              const m = MEMBERS.find((x) => x.id === id);
-              const sel = form.payer === id;
+            {members.map((m) => {
+              const sel = form.payerId === m.user.id;
               return (
                 <button
-                  key={id}
-                  onClick={() => setForm({ ...form, payer: id })}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 8,
-                    padding: "6px 12px 6px 6px",
-                    borderRadius: "var(--r-pill)",
-                    border: `1px solid ${sel ? "var(--terracotta)" : "var(--line)"}`,
-                    background: sel
-                      ? "oklch(from var(--terracotta) l c h / 0.1)"
-                      : "var(--paper)",
-                    fontSize: 13,
-                    fontWeight: sel ? 500 : 400,
-                  }}
+                  key={m.id}
+                  onClick={() => setForm({ ...form, payerId: m.user.id })}
+                  style={chipStyle(sel, "terracotta")}
                 >
-                  <Avatar id={id} size={24} ring={false} />
-                  {m?.name}
+                  <UserAvatar user={m.user} size={24} ring={false} />
+                  {m.user.name}
                 </button>
               );
             })}
@@ -112,41 +150,33 @@ export function AddExpenseModal({
         <div>
           <label className="label">{t("trip.budget.split")}</label>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            {ACTIVE_TRIP.members.map((id) => {
-              const m = MEMBERS.find((x) => x.id === id);
-              const sel = form.split.includes(id);
+            {members.map((m) => {
+              const sel = form.split.includes(m.user.id);
               return (
                 <button
-                  key={id}
-                  onClick={() => toggleSplit(id)}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 8,
-                    padding: "6px 12px 6px 6px",
-                    borderRadius: "var(--r-pill)",
-                    border: `1px solid ${sel ? "var(--ink)" : "var(--line)"}`,
-                    background: sel ? "var(--paper-2)" : "var(--paper)",
-                    fontSize: 13,
-                    opacity: sel ? 1 : 0.55,
-                  }}
+                  key={m.id}
+                  onClick={() => toggleSplit(m.user.id)}
+                  style={chipStyle(sel)}
                 >
-                  <Avatar id={id} size={24} ring={false} />
-                  {m?.name}
+                  <UserAvatar user={m.user} size={24} ring={false} />
+                  {m.user.name}
                 </button>
               );
             })}
           </div>
-          {form.split.length > 0 && Number(form.amount) > 0 && (
+          {form.split.length > 0 && amountNum > 0 && (
             <div
               className="mono"
               style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 8 }}
             >
-              ≈ {Math.round(Number(form.amount) / form.split.length).toLocaleString("ru")}{" "}
-              ₽ с человека
+              ≈ {Math.round(amountNum / form.split.length).toLocaleString("ru")} ₽ с
+              человека
             </div>
           )}
         </div>
+        {mutation.isError && (
+          <div className="field-error">{String(mutation.error)}</div>
+        )}
       </div>
       <div
         style={{
@@ -163,11 +193,11 @@ export function AddExpenseModal({
         </button>
         <button
           className="btn btn-primary"
-          disabled={!valid}
-          style={{ opacity: valid ? 1 : 0.4 }}
-          onClick={submit}
+          disabled={!valid || mutation.isPending}
+          style={{ opacity: !valid || mutation.isPending ? 0.4 : 1 }}
+          onClick={() => mutation.mutate()}
         >
-          {t("common.add")}
+          {mutation.isPending ? "…" : t("common.add")}
         </button>
       </div>
     </Modal>
