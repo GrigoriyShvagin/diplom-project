@@ -231,7 +231,7 @@ export function TripDetailPage() {
         {tab === "budget" && (
           <BudgetTab expenses={expenses} onAdd={() => setExpenseModal(true)} />
         )}
-        {tab === "members" && <MembersTab />}
+        {tab === "members" && <MembersTab tripId={tripId} />}
         {tab === "final" && <FinalTab />}
       </main>
 

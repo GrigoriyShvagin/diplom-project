@@ -1,32 +1,63 @@
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@/shared/lib/i18n";
-import { MEMBERS } from "@/shared/lib/demo";
-import { Avatar } from "@/shared/ui/Avatar";
+import { useAuth } from "@/shared/lib/auth-context";
+import { getTrip, inviteMember, removeMember, type ApiTripMember } from "@/shared/api/trips";
+import { ApiError } from "@/shared/api/client";
+import { UserAvatar } from "@/shared/ui/UserAvatar";
+import { Modal } from "@/shared/ui/Modal";
 import { TabHeader } from "./TabHeader";
 
-type RosterEntry = {
-  id: string;
-  role: "owner" | "member";
-  joined: string;
-  places: number;
-};
-
-const ROSTER: RosterEntry[] = [
-  { id: "me", role: "owner", joined: "12.05", places: 5 },
-  { id: "m1", role: "member", joined: "13.05", places: 3 },
-  { id: "m2", role: "member", joined: "14.05", places: 4 },
-  { id: "m3", role: "member", joined: "16.05", places: 2 },
-];
-
-export function MembersTab() {
+export function MembersTab({ tripId }: { tripId: string }) {
   const { t } = useT();
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  const tripKey = ["trips", tripId] as const;
+  const [inviteOpen, setInviteOpen] = useState(false);
+
+  const tripQuery = useQuery({
+    queryKey: tripKey,
+    queryFn: () => getTrip(tripId),
+  });
+
+  const trip = tripQuery.data;
+  const members: ApiTripMember[] = trip?.members ?? [];
+  const isOwner = trip?.ownerId === auth.user?.id;
+  const inviteLink = `${window.location.origin}/trips/${tripId}/join`;
+
+  const inviteMutation = useMutation({
+    mutationFn: (email: string) => inviteMember(tripId, email),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: tripKey });
+      setInviteOpen(false);
+    },
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: (memberId: string) => removeMember(tripId, memberId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: tripKey });
+    },
+  });
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
       <TabHeader
-        eyebrow={`участники · ${ROSTER.length} / 6`}
+        eyebrow={`участники · ${members.length}`}
         title="Команда"
         italic="поездки"
-        action={<button className="btn btn-primary">+ {t("trip.members.invite")}</button>}
+        action={
+          <button className="btn btn-primary" onClick={() => setInviteOpen(true)}>
+            + {t("trip.members.invite")}
+          </button>
+        }
       />
+
+      {tripQuery.isLoading && (
+        <div className="mono" style={{ color: "var(--ink-3)", fontSize: 13 }}>
+          загрузка…
+        </div>
+      )}
 
       <div
         style={{
@@ -36,43 +67,64 @@ export function MembersTab() {
           maxWidth: 1100,
         }}
       >
-        {ROSTER.map((r) => {
-          const m = MEMBERS.find((x) => x.id === r.id);
-          return (
-            <div
-              key={r.id}
-              className="card"
-              style={{ padding: 20, display: "flex", alignItems: "center", gap: 14 }}
-            >
-              <Avatar id={r.id} size={48} ring={false} />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 16, fontWeight: 500 }}>{m?.name}</div>
-                <div
-                  className="mono"
-                  style={{
-                    fontSize: 11,
-                    color: "var(--ink-3)",
-                    letterSpacing: "0.04em",
-                  }}
-                >
-                  с {r.joined} · {r.places} мест добавлено
-                </div>
+        {members.map((m) => (
+          <div
+            key={m.id}
+            className="card"
+            style={{ padding: 20, display: "flex", alignItems: "center", gap: 14 }}
+          >
+            <UserAvatar user={m.user} size={48} ring={false} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 16, fontWeight: 500 }}>{m.user.name}</div>
+              <div
+                className="mono"
+                style={{
+                  fontSize: 11,
+                  color: "var(--ink-3)",
+                  letterSpacing: "0.04em",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+                title={m.user.email}
+              >
+                {m.user.email}
               </div>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <span
                 className="badge"
                 style={{
-                  color: r.role === "owner" ? "var(--terracotta)" : "var(--ink-3)",
+                  color: m.role === "owner" ? "var(--terracotta)" : "var(--ink-3)",
                 }}
               >
                 <span className="dot" />
-                {r.role === "owner"
+                {m.role === "owner"
                   ? t("trip.members.role.owner")
                   : t("trip.members.role.member")}
               </span>
+              {isOwner && m.role !== "owner" && (
+                <button
+                  onClick={() => {
+                    if (confirm(`Удалить ${m.user.name} из поездки?`)) {
+                      removeMutation.mutate(m.id);
+                    }
+                  }}
+                  title="Удалить участника"
+                  style={{
+                    color: "var(--ink-3)",
+                    fontSize: 16,
+                    padding: "0 4px",
+                  }}
+                >
+                  ×
+                </button>
+              )}
             </div>
-          );
-        })}
+          </div>
+        ))}
         <button
+          onClick={() => setInviteOpen(true)}
           className="card"
           style={{
             padding: 20,
@@ -123,11 +175,97 @@ export function MembersTab() {
               whiteSpace: "nowrap",
             }}
           >
-            journey.app/join/k7-georgia-2026-9af
+            {inviteLink}
           </code>
-          <button className="btn btn-ghost btn-sm">копировать</button>
+          <button
+            className="btn btn-ghost btn-sm"
+            onClick={() => void navigator.clipboard?.writeText(inviteLink)}
+          >
+            копировать
+          </button>
+        </div>
+        <div style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 8 }}>
+          (ссылка-приглашение — будущая фича. Пока приглашайте по email через кнопку выше.)
         </div>
       </div>
+
+      <InviteByEmailModal
+        open={inviteOpen}
+        onClose={() => setInviteOpen(false)}
+        onSubmit={(email) => inviteMutation.mutate(email)}
+        submitting={inviteMutation.isPending}
+        error={
+          inviteMutation.error instanceof ApiError
+            ? inviteMutation.error.status === 404
+              ? "Пользователь с таким email ещё не зарегистрирован"
+              : inviteMutation.error.status === 409
+                ? "Уже участник этой поездки"
+                : inviteMutation.error.message
+            : inviteMutation.error
+              ? "Не удалось пригласить участника"
+              : null
+        }
+      />
     </div>
+  );
+}
+
+function InviteByEmailModal({
+  open,
+  onClose,
+  onSubmit,
+  submitting,
+  error,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onSubmit: (email: string) => void;
+  submitting: boolean;
+  error: string | null;
+}) {
+  const [email, setEmail] = useState("");
+  const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="Пригласить друга"
+      subtitle="Введите email уже зарегистрированного пользователя"
+    >
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <label className="label">Email</label>
+        <input
+          className="input"
+          type="email"
+          placeholder="friend@journey.io"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          autoFocus
+        />
+        {error && <div className="field-error">{error}</div>}
+      </div>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: 8,
+          marginTop: 24,
+          paddingTop: 16,
+          borderTop: "1px solid var(--line)",
+        }}
+      >
+        <button className="btn btn-ghost" onClick={onClose} disabled={submitting}>
+          Отмена
+        </button>
+        <button
+          className="btn btn-primary"
+          disabled={!ok || submitting}
+          style={{ opacity: !ok || submitting ? 0.4 : 1 }}
+          onClick={() => onSubmit(email.trim())}
+        >
+          {submitting ? "…" : "Пригласить"}
+        </button>
+      </div>
+    </Modal>
   );
 }

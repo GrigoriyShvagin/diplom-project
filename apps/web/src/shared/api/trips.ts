@@ -42,3 +42,16 @@ export function createTrip(input: CreateTripInput) {
     body: JSON.stringify(input),
   });
 }
+
+export function inviteMember(tripId: string, email: string) {
+  return apiFetch<ApiTrip>(`/trips/${tripId}/members`, {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+export function removeMember(tripId: string, memberId: string) {
+  return apiFetch<void>(`/trips/${tripId}/members/${memberId}`, {
+    method: "DELETE",
+  });
+}

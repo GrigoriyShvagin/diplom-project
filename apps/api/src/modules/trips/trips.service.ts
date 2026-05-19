@@ -1,4 +1,9 @@
-import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
+import {
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
 import { CreateTripDto } from "./dto/create-trip.dto";
 import { UpdateTripDto } from "./dto/update-trip.dto";
@@ -108,6 +113,48 @@ export class TripsService {
     if (!existing) throw new NotFoundException();
     if (existing.ownerId !== userId) throw new ForbiddenException();
     await this.prisma.trip.delete({ where: { id } });
+  }
+
+  async inviteMember(tripId: string, userId: string, email: string) {
+    await this.assertMember(tripId, userId);
+    const invitee = await this.prisma.user.findUnique({
+      where: { email },
+      select: { id: true },
+    });
+    if (!invitee) {
+      throw new NotFoundException("Пользователь с таким email не найден");
+    }
+    const existing = await this.prisma.tripMember.findUnique({
+      where: { tripId_userId: { tripId, userId: invitee.id } },
+      select: { id: true },
+    });
+    if (existing) {
+      throw new ConflictException("Уже участник этой поездки");
+    }
+    await this.prisma.tripMember.create({
+      data: { tripId, userId: invitee.id, role: "member" },
+    });
+    return this.findByIdForUser(tripId, userId);
+  }
+
+  async removeMember(tripId: string, memberId: string, userId: string) {
+    const trip = await this.prisma.trip.findUnique({
+      where: { id: tripId },
+      select: { ownerId: true },
+    });
+    if (!trip) throw new NotFoundException();
+    if (trip.ownerId !== userId) throw new ForbiddenException();
+
+    const member = await this.prisma.tripMember.findUnique({
+      where: { id: memberId },
+      select: { tripId: true, userId: true, role: true },
+    });
+    if (!member) throw new NotFoundException();
+    if (member.tripId !== tripId) throw new ForbiddenException();
+    if (member.role === "owner") {
+      throw new ForbiddenException("Нельзя удалить организатора");
+    }
+    await this.prisma.tripMember.delete({ where: { id: memberId } });
   }
 
   private isMember(trip: { ownerId: string; members: { user: { id: string } }[] }, userId: string) {
