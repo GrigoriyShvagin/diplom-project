@@ -1,5 +1,6 @@
-import type { TripSummary } from "@/shared/lib/demo";
-import { AvatarStack } from "@/shared/ui/Avatar";
+import type { ApiTrip } from "@/shared/api/trips";
+import { UserAvatarStack } from "@/shared/ui/UserAvatar";
+import { formatTripDates, tripDayCount } from "@/shared/lib/format";
 
 const TINTS = [
   "linear-gradient(135deg, oklch(0.55 0.10 200), oklch(0.35 0.06 215))",
@@ -13,11 +14,14 @@ export function TripCard({
   index,
   onOpen,
 }: {
-  trip: TripSummary;
+  trip: ApiTrip;
   index: number;
   onOpen: () => void;
 }) {
   const tint = TINTS[index % TINTS.length];
+  const dates = formatTripDates(trip.startDate, trip.endDate);
+  const days = tripDayCount(trip.startDate, trip.endDate);
+  const dest = trip.destinationLabel ?? "направление не указано";
   return (
     <article
       onClick={onOpen}
@@ -72,7 +76,7 @@ export function TripCard({
         <div>
           <h3 style={{ fontSize: 19, marginBottom: 4, fontWeight: 600 }}>{trip.title}</h3>
           <p style={{ fontSize: 13, color: "var(--ink-3)", margin: 0 }}>
-            {trip.dest} · {trip.dates}
+            {dest} · {dates}
           </p>
         </div>
         <div
@@ -83,8 +87,10 @@ export function TripCard({
             marginTop: "auto",
           }}
         >
-          <AvatarStack ids={trip.members} size={22} max={5} />
-          <span style={{ fontSize: 12, color: "var(--ink-3)" }}>{trip.days} дней</span>
+          <UserAvatarStack users={trip.members.map((m) => m.user)} size={22} max={5} />
+          <span style={{ fontSize: 12, color: "var(--ink-3)" }}>
+            {days != null ? `${days} дней` : `${trip.members.length} чел`}
+          </span>
         </div>
       </div>
     </article>

@@ -1,14 +1,12 @@
 import { useEffect, useState } from "react";
 import { useT } from "@/shared/lib/i18n";
 import { Modal } from "@/shared/ui/Modal";
-import { Avatar } from "@/shared/ui/Avatar";
 
 export type NewTripDraft = {
   title: string;
-  dest: string;
-  dates: string;
-  cover: string;
-  days: number;
+  destinationLabel?: string;
+  startDate?: string;
+  endDate?: string;
 };
 
 type FormState = {
@@ -16,17 +14,20 @@ type FormState = {
   dest: string;
   dateFrom: string;
   dateTo: string;
-  cover: string;
 };
 
 export function CreateTripModal({
   open,
   onClose,
   onCreate,
+  submitting = false,
+  error = null,
 }: {
   open: boolean;
   onClose: () => void;
   onCreate: (draft: NewTripDraft) => void;
+  submitting?: boolean;
+  error?: string | null;
 }) {
   const { t } = useT();
   const [step, setStep] = useState(0);
@@ -35,14 +36,13 @@ export function CreateTripModal({
     dest: "",
     dateFrom: "",
     dateTo: "",
-    cover: "",
   });
 
   useEffect(() => {
     if (open) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setStep(0);
-      setForm({ title: "", dest: "", dateFrom: "", dateTo: "", cover: "" });
+      setForm({ title: "", dest: "", dateFrom: "", dateTo: "" });
     }
   }, [open]);
 
@@ -53,11 +53,10 @@ export function CreateTripModal({
 
   const submit = () => {
     onCreate({
-      title: form.title,
-      dest: form.dest,
-      dates: `${form.dateFrom} — ${form.dateTo}`,
-      cover: form.cover,
-      days: 7,
+      title: form.title.trim(),
+      destinationLabel: form.dest.trim() || undefined,
+      startDate: form.dateFrom || undefined,
+      endDate: form.dateTo || undefined,
     });
   };
 
@@ -145,25 +144,18 @@ export function CreateTripModal({
               />
             </div>
           </div>
-          <MiniCalendar />
           <div
             style={{
               background: "var(--paper-2)",
               padding: 16,
               borderRadius: "var(--r-md)",
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
+              fontSize: 13,
+              color: "var(--ink-2)",
             }}
           >
-            <Avatar id="me" size={32} ring={false} />
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 13, fontWeight: 500 }}>Вы — организатор</div>
-              <div className="mono" style={{ fontSize: 11, color: "var(--ink-3)" }}>
-                друзей пригласите внутри поездки
-              </div>
-            </div>
+            Вы будете назначены организатором. Друзей пригласите внутри поездки.
           </div>
+          {error && <div className="field-error">{error}</div>}
         </div>
       )}
 
@@ -179,6 +171,7 @@ export function CreateTripModal({
         <button
           className="btn btn-ghost"
           onClick={step === 0 ? onClose : () => setStep(0)}
+          disabled={submitting}
         >
           {step === 0 ? t("common.cancel") : "← Назад"}
         </button>
@@ -194,77 +187,14 @@ export function CreateTripModal({
         ) : (
           <button
             className="btn btn-primary"
-            disabled={!canNext}
+            disabled={!canNext || submitting}
             onClick={submit}
-            style={{ opacity: canNext ? 1 : 0.4 }}
+            style={{ opacity: !canNext || submitting ? 0.4 : 1 }}
           >
-            {t("dash.create.cta")}
+            {submitting ? "..." : t("dash.create.cta")}
           </button>
         )}
       </div>
     </Modal>
-  );
-}
-
-function MiniCalendar() {
-  const days = Array.from({ length: 30 }, (_, i) => i + 1);
-  const selStart = 12;
-  const selEnd = 22;
-  return (
-    <div style={{ background: "var(--paper-2)", padding: 16, borderRadius: "var(--r-md)" }}>
-      <div
-        className="mono"
-        style={{
-          fontSize: 11,
-          color: "var(--ink-3)",
-          marginBottom: 10,
-          letterSpacing: "0.06em",
-        }}
-      >
-        июнь 2026
-      </div>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(7, 1fr)",
-          gap: 4,
-          fontSize: 11,
-        }}
-      >
-        {["п", "в", "с", "ч", "п", "с", "в"].map((d, i) => (
-          <div
-            key={i}
-            className="mono"
-            style={{ textAlign: "center", color: "var(--ink-3)" }}
-          >
-            {d}
-          </div>
-        ))}
-        {days.map((d) => {
-          const inRange = d >= selStart && d <= selEnd;
-          const isEdge = d === selStart || d === selEnd;
-          return (
-            <div
-              key={d}
-              className="mono"
-              style={{
-                textAlign: "center",
-                padding: "6px 0",
-                background: isEdge
-                  ? "var(--terracotta)"
-                  : inRange
-                    ? "oklch(from var(--terracotta) l c h / 0.18)"
-                    : "transparent",
-                color: isEdge ? "var(--paper)" : "var(--ink)",
-                borderRadius: 6,
-                fontWeight: isEdge ? 600 : 400,
-              }}
-            >
-              {d}
-            </div>
-          );
-        })}
-      </div>
-    </div>
   );
 }

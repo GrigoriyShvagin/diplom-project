@@ -1,6 +1,8 @@
 import { useState, type CSSProperties, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useT } from "@/shared/lib/i18n";
+import { useAuth } from "@/shared/lib/auth-context";
+import { ApiError } from "@/shared/api/client";
 import { Logo } from "@/shared/ui/Logo";
 import { LangSwitcher } from "@/shared/ui/LangSwitcher";
 
@@ -13,9 +15,12 @@ const errStyle: CSSProperties = { borderColor: "var(--terracotta)" };
 export function AuthShell({ mode }: { mode: Mode }) {
   const { t, lang } = useT();
   const navigate = useNavigate();
+  const auth = useAuth();
   const [form, setForm] = useState<FormState>({ name: "", email: "", password: "" });
   const [errors, setErrors] = useState<Errors>({});
   const [touched, setTouched] = useState<Partial<Record<keyof FormState, boolean>>>({});
+  const [submitting, setSubmitting] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
 
   const isLogin = mode === "login";
 
@@ -31,17 +36,39 @@ export function AuthShell({ mode }: { mode: Mode }) {
     const next = { ...form, [k]: v };
     setForm(next);
     if (touched[k]) setErrors(validate(next));
+    if (serverError) setServerError(null);
   };
   const blur = (k: keyof FormState) => {
     setTouched({ ...touched, [k]: true });
     setErrors(validate(form));
   };
-  const submit = (e: FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
     setTouched({ name: true, email: true, password: true });
     const errs = validate(form);
     setErrors(errs);
-    if (Object.keys(errs).length === 0) navigate("/trips");
+    if (Object.keys(errs).length > 0) return;
+
+    setSubmitting(true);
+    setServerError(null);
+    try {
+      if (isLogin) {
+        await auth.login(form.email, form.password);
+      } else {
+        await auth.register(form.name, form.email, form.password);
+      }
+      navigate("/trips");
+    } catch (err) {
+      if (err instanceof ApiError) {
+        if (err.status === 401) setServerError("Неверный email или пароль");
+        else if (err.status === 409) setServerError("Этот email уже занят");
+        else setServerError(err.message);
+      } else {
+        setServerError("Не удалось подключиться к серверу");
+      }
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -133,7 +160,7 @@ export function AuthShell({ mode }: { mode: Mode }) {
               {errors.email && <div className="field-error">{errors.email}</div>}
             </div>
 
-            <div style={{ marginBottom: 28 }}>
+            <div style={{ marginBottom: 16 }}>
               <label
                 className="label"
                 style={{ display: "flex", justifyContent: "space-between" }}
@@ -164,12 +191,19 @@ export function AuthShell({ mode }: { mode: Mode }) {
               {errors.password && <div className="field-error">{errors.password}</div>}
             </div>
 
+            {serverError && (
+              <div className="field-error" style={{ marginBottom: 16 }}>
+                {serverError}
+              </div>
+            )}
+
             <button
               type="submit"
               className="btn btn-primary btn-lg"
-              style={{ width: "100%" }}
+              style={{ width: "100%", opacity: submitting ? 0.6 : 1 }}
+              disabled={submitting}
             >
-              {isLogin ? t("auth.login.cta") : t("auth.signup.cta")} →
+              {submitting ? "..." : isLogin ? t("auth.login.cta") : t("auth.signup.cta")} →
             </button>
 
             <div
@@ -190,10 +224,10 @@ export function AuthShell({ mode }: { mode: Mode }) {
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <button type="button" className="btn btn-ghost">
+              <button type="button" className="btn btn-ghost" disabled>
                 Google
               </button>
-              <button type="button" className="btn btn-ghost">
+              <button type="button" className="btn btn-ghost" disabled>
                 Telegram
               </button>
             </div>

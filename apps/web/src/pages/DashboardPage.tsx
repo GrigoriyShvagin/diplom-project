@@ -1,24 +1,52 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@/shared/lib/i18n";
-import { TRIPS, type TripSummary, type TripStatus } from "@/shared/lib/demo";
+import { useAuth } from "@/shared/lib/auth-context";
+import { listTrips, createTrip, type ApiTrip } from "@/shared/api/trips";
+import { ApiError } from "@/shared/api/client";
 import { Logo } from "@/shared/ui/Logo";
 import { LangSwitcher } from "@/shared/ui/LangSwitcher";
-import { Avatar } from "@/shared/ui/Avatar";
+import { UserAvatar } from "@/shared/ui/UserAvatar";
 import { TripCard, NewTripCard } from "@/features/dashboard/TripCard";
 import { EmptyState } from "@/features/dashboard/EmptyState";
 import { CreateTripModal } from "@/features/dashboard/CreateTripModal";
 
-type Filter = "all" | TripStatus;
+type Filter = "all" | "draft" | "planning" | "active" | "done";
+
+const tripsKey = ["trips"] as const;
 
 export function DashboardPage() {
   const { t } = useT();
   const navigate = useNavigate();
+  const auth = useAuth();
+  const queryClient = useQueryClient();
   const [filter, setFilter] = useState<Filter>("all");
   const [createOpen, setCreateOpen] = useState(false);
-  const [trips, setTrips] = useState<TripSummary[]>(TRIPS);
+  const [createError, setCreateError] = useState<string | null>(null);
 
+  const tripsQuery = useQuery({
+    queryKey: tripsKey,
+    queryFn: listTrips,
+  });
+
+  const createMutation = useMutation({
+    mutationFn: createTrip,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: tripsKey });
+      setCreateOpen(false);
+      setCreateError(null);
+    },
+    onError: (err: unknown) => {
+      setCreateError(err instanceof Error ? err.message : "Не удалось создать поездку");
+    },
+  });
+
+  const trips = useMemo(() => tripsQuery.data ?? [], [tripsQuery.data]);
+  const counts = useMemo(() => countByStatus(trips), [trips]);
   const filtered = trips.filter((tr) => filter === "all" || tr.status === filter);
+
+  const firstName = auth.user?.name?.split(/\s+/)[0] ?? "";
 
   return (
     <div className="fade-in" style={{ minHeight: "100vh", background: "var(--paper)" }}>
@@ -46,11 +74,16 @@ export function DashboardPage() {
             <Logo />
           </button>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <button className="btn btn-ghost btn-sm" style={{ padding: "8px 12px" }}>
-              🔔
+            <button
+              className="btn btn-ghost btn-sm"
+              style={{ padding: "8px 12px" }}
+              onClick={() => void auth.logout().then(() => navigate("/"))}
+              title="Выйти"
+            >
+              ⎋
             </button>
             <LangSwitcher />
-            <Avatar id="me" size={36} ring={false} />
+            {auth.user && <UserAvatar user={auth.user} size={36} ring={false} />}
           </div>
         </div>
       </header>
@@ -69,7 +102,7 @@ export function DashboardPage() {
           <h1 style={{ fontSize: 36, lineHeight: 1.1, fontWeight: 600 }}>
             {t("dash.greet")},{" "}
             <span className="display-italic" style={{ color: "var(--terracotta)" }}>
-              Аня
+              {firstName}
             </span>
           </h1>
           <button className="btn btn-primary" onClick={() => setCreateOpen(true)}>
@@ -91,21 +124,9 @@ export function DashboardPage() {
             {(
               [
                 { id: "all", label: t("dash.filter.all"), count: trips.length },
-                {
-                  id: "planning",
-                  label: t("dash.filter.planning"),
-                  count: trips.filter((x) => x.status === "planning").length,
-                },
-                {
-                  id: "active",
-                  label: t("dash.filter.active"),
-                  count: trips.filter((x) => x.status === "active").length,
-                },
-                {
-                  id: "done",
-                  label: t("dash.filter.done"),
-                  count: trips.filter((x) => x.status === "done").length,
-                },
+                { id: "planning", label: t("dash.filter.planning"), count: counts.planning },
+                { id: "active", label: t("dash.filter.active"), count: counts.active },
+                { id: "done", label: t("dash.filter.done"), count: counts.done },
               ] as const
             ).map((f) => (
               <button
@@ -133,7 +154,35 @@ export function DashboardPage() {
           </div>
         </div>
 
-        {filtered.length === 0 ? (
+        {tripsQuery.isLoading && (
+          <div
+            className="mono"
+            style={{ color: "var(--ink-3)", fontSize: 13, padding: "60px 0", textAlign: "center" }}
+          >
+            загрузка…
+          </div>
+        )}
+
+        {tripsQuery.isError && (
+          <div
+            style={{
+              padding: "60px 24px",
+              textAlign: "center",
+              color: "var(--terracotta-ink)",
+              fontSize: 14,
+            }}
+          >
+            Не удалось получить список поездок. Проверьте, что API запущен.
+            <div
+              className="mono"
+              style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 8 }}
+            >
+              {errorMessage(tripsQuery.error)}
+            </div>
+          </div>
+        )}
+
+        {tripsQuery.isSuccess && filtered.length === 0 ? (
           <EmptyState onCreate={() => setCreateOpen(true)} />
         ) : (
           <div
@@ -151,29 +200,37 @@ export function DashboardPage() {
                 onOpen={() => navigate(`/trips/${tr.id}`)}
               />
             ))}
-            <NewTripCard onClick={() => setCreateOpen(true)} />
+            {tripsQuery.isSuccess && (
+              <NewTripCard onClick={() => setCreateOpen(true)} />
+            )}
           </div>
         )}
       </main>
 
       <CreateTripModal
         open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        onCreate={(draft) => {
-          const newTrip: TripSummary = {
-            id: `t${Date.now()}`,
-            title: draft.title,
-            dest: draft.dest,
-            dates: draft.dates,
-            status: "planning",
-            members: ["me"],
-            cover: draft.cover || "новая поездка",
-            days: draft.days,
-          };
-          setTrips([newTrip, ...trips]);
+        onClose={() => {
           setCreateOpen(false);
+          setCreateError(null);
         }}
+        onCreate={(draft) => createMutation.mutate(draft)}
+        submitting={createMutation.isPending}
+        error={createError}
       />
     </div>
   );
+}
+
+function countByStatus(trips: ApiTrip[]) {
+  const counts = { draft: 0, planning: 0, active: 0, done: 0 };
+  for (const t of trips) {
+    if (t.status in counts) counts[t.status as keyof typeof counts] += 1;
+  }
+  return counts;
+}
+
+function errorMessage(err: unknown): string {
+  if (err instanceof ApiError) return `${err.status} · ${err.message}`;
+  if (err instanceof Error) return err.message;
+  return String(err);
 }
