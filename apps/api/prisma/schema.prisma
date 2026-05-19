@@ -15,11 +15,12 @@ model User {
   avatarUrl    String?
   createdAt    DateTime @default(now())
 
-  ownedTrips  Trip[]         @relation("TripOwner")
-  memberships TripMember[]
-  voteAnswers VoteAnswer[]
-  expenses    Expense[]
-  splits      ExpenseSplit[]
+  ownedTrips   Trip[]         @relation("TripOwner")
+  memberships  TripMember[]
+  voteAnswers  VoteAnswer[]
+  votesCreated Vote[]         @relation("VoteAuthor")
+  expenses     Expense[]
+  splits       ExpenseSplit[]
 
   @@map("users")
 }
@@ -176,14 +177,18 @@ model ChatAnalysis {
 }
 
 model Vote {
-  id        String    @id @default(uuid())
-  title     String
-  type      String
-  expiresAt DateTime?
-  createdAt DateTime  @default(now())
+  id         String    @id @default(uuid())
+  title      String
+  type       String    @default("single")
+  resolvedAt DateTime?
+  expiresAt  DateTime?
+  createdAt  DateTime  @default(now())
 
   tripId String
   trip   Trip   @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  createdById String
+  createdBy   User   @relation("VoteAuthor", fields: [createdById], references: [id])
 
   options VoteOption[]
 

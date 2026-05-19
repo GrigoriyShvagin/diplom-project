@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useT } from "@/shared/lib/i18n";
-import { ACTIVE_TRIP, type Vote, type Expense } from "@/shared/lib/demo";
+import { ACTIVE_TRIP, type Expense } from "@/shared/lib/demo";
 import { Logo } from "@/shared/ui/Logo";
 import { LangSwitcher } from "@/shared/ui/LangSwitcher";
 import { useAuth } from "@/shared/lib/auth-context";
@@ -45,7 +45,6 @@ export function TripDetailPage() {
 
   const [tab, setTab] = useState<TabId>("itin");
   // mocked data still used by tabs not yet on real API
-  const [votes, setVotes] = useState<Vote[]>(ACTIVE_TRIP.votes);
   const [expenses, setExpenses] = useState<Expense[]>(ACTIVE_TRIP.expenses);
   const [expenseModal, setExpenseModal] = useState(false);
 
@@ -59,20 +58,6 @@ export function TripDetailPage() {
     { id: "members", label: t("trip.tab.members") },
     { id: "final", label: "Итоги" },
   ];
-
-  const castVote = (vid: string, oid: string) => {
-    setVotes(
-      votes.map((v) => {
-        if (v.id !== vid || v.status === "resolved") return v;
-        let opts = v.options.map((o) =>
-          v.myVote === o.id ? { ...o, votes: Math.max(0, o.votes - 1) } : o,
-        );
-        if (v.myVote === oid) return { ...v, myVote: null, options: opts };
-        opts = opts.map((o) => (o.id === oid ? { ...o, votes: o.votes + 1 } : o));
-        return { ...v, myVote: oid, options: opts };
-      }),
-    );
-  };
 
   const addExpense = (e: { title: string; amount: number; payer: string; split: string[] }) => {
     setExpenses([
@@ -227,7 +212,7 @@ export function TripDetailPage() {
         {tab === "summary" && <SummaryTab onGoVotes={() => setTab("votes")} />}
         {tab === "map" && <MapTab />}
         {tab === "itin" && <ItineraryTab tripId={tripId} />}
-        {tab === "votes" && <VotesTab votes={votes} castVote={castVote} />}
+        {tab === "votes" && <VotesTab tripId={tripId} />}
         {tab === "budget" && (
           <BudgetTab expenses={expenses} onAdd={() => setExpenseModal(true)} />
         )}
