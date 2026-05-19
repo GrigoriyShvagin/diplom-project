@@ -9,6 +9,8 @@ import {
 } from "react";
 import { MEMBERS } from "@/shared/lib/demo";
 import { Avatar, AvatarStack } from "@/shared/ui/Avatar";
+import { askGuide } from "@/shared/api/ai";
+import { ApiError } from "@/shared/api/client";
 
 type ChatMessage = {
   id: string;
@@ -88,12 +90,29 @@ const SEED_MESSAGES: ChatMessage[] = [
   },
 ];
 
-const STUB_REPLY =
-  "Понял запрос. Это демо-версия — в проде я обращусь к OpenAI с контекстом чата и поездки.\n\n**Что бы я учёл:**\n- последние 12 сообщений в чате\n- текущий маршрут и список мест\n- бюджет и кто за что платил\n\nКак только бэкенд `/trips/:id/chat/analyze` появится — буду давать настоящие ответы.";
+const NO_KEY_REPLY =
+  "AI-гид не настроен на сервере. Добавьте `ANTHROPIC_API_KEY` в `apps/api/.env` и перезапустите API.";
 
-async function askGuideStub(): Promise<string> {
-  await new Promise((r) => setTimeout(r, 900));
-  return STUB_REPLY;
+async function askGuideViaApi(
+  tripId: string,
+  question: string,
+  history: ChatMessage[],
+): Promise<string> {
+  try {
+    const recentMessages = history.slice(-12).map((m) => {
+      const member = MEMBERS.find((x) => x.id === m.author);
+      const author = m.isBot ? "Гид" : (member?.name ?? m.author);
+      return { author, text: m.text, isBot: m.isBot };
+    });
+    const { reply } = await askGuide(tripId, { question, recentMessages });
+    return reply;
+  } catch (err) {
+    if (err instanceof ApiError) {
+      if (err.status === 503) return NO_KEY_REPLY;
+      return `Не удалось получить ответ (${err.status}). Попробуйте ещё раз.`;
+    }
+    return "Связь не дошла до меня — попробуйте через минуту.";
+  }
 }
 
 const iconBtn: CSSProperties = {
@@ -130,7 +149,7 @@ const inviteShareBtn: CSSProperties = {
   fontSize: 12,
 };
 
-export function ChatTab() {
+export function ChatTab({ tripId }: { tripId: string }) {
   const [messages, setMessages] = useState<ChatMessage[]>(SEED_MESSAGES);
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
@@ -190,7 +209,7 @@ export function ChatTab() {
     if (/@гид\b/i.test(txt)) {
       setThinking(true);
       try {
-        const reply = await askGuideStub();
+        const reply = await askGuideViaApi(tripId, txt, [...messages, myMsg]);
         const botTime = new Date().toLocaleTimeString("ru-RU", {
           hour: "2-digit",
           minute: "2-digit",

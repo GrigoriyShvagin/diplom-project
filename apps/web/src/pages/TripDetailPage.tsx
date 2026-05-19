@@ -188,7 +188,7 @@ export function TripDetailPage() {
       </aside>
 
       <main style={{ flex: 1, minWidth: 0, padding: "32px 40px" }}>
-        {tab === "chat" && <ChatTab />}
+        {tab === "chat" && <ChatTab tripId={tripId} />}
         {tab === "summary" && <SummaryTab onGoVotes={() => setTab("votes")} />}
         {tab === "map" && <MapTab />}
         {tab === "itin" && <ItineraryTab tripId={tripId} />}
