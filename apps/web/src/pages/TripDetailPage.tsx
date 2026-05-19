@@ -1,10 +1,15 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { useT } from "@/shared/lib/i18n";
 import { ACTIVE_TRIP, type Vote, type Expense } from "@/shared/lib/demo";
 import { Logo } from "@/shared/ui/Logo";
 import { LangSwitcher } from "@/shared/ui/LangSwitcher";
-import { Avatar } from "@/shared/ui/Avatar";
+import { useAuth } from "@/shared/lib/auth-context";
+import { UserAvatar } from "@/shared/ui/UserAvatar";
+import { getTrip } from "@/shared/api/trips";
+import { ApiError } from "@/shared/api/client";
+import { formatTripDates } from "@/shared/lib/format";
 import { ChatTab } from "@/features/trip/ChatTab";
 import { SummaryTab } from "@/features/trip/SummaryTab";
 import { MapTab } from "@/features/trip/MapTab";
@@ -28,14 +33,20 @@ type TabId =
 export function TripDetailPage() {
   const { t } = useT();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<TabId>("chat");
+  const auth = useAuth();
+  const { id } = useParams<{ id: string }>();
+  const tripId = id ?? "";
+
+  const tripQuery = useQuery({
+    queryKey: ["trips", tripId] as const,
+    queryFn: () => getTrip(tripId),
+    enabled: tripId.length > 0,
+  });
+
+  const [tab, setTab] = useState<TabId>("itin");
+  // mocked data still used by tabs not yet on real API
   const [votes, setVotes] = useState<Vote[]>(ACTIVE_TRIP.votes);
   const [expenses, setExpenses] = useState<Expense[]>(ACTIVE_TRIP.expenses);
-  const [openDays, setOpenDays] = useState<Record<number, boolean>>({
-    1: true,
-    2: false,
-    3: false,
-  });
   const [expenseModal, setExpenseModal] = useState(false);
 
   const tabs: { id: TabId; label: string }[] = [
@@ -77,6 +88,38 @@ export function TripDetailPage() {
     ]);
     setExpenseModal(false);
   };
+
+  if (tripQuery.isLoading) {
+    return <CenteredNote text="загрузка…" />;
+  }
+
+  if (tripQuery.isError) {
+    const err = tripQuery.error;
+    const status = err instanceof ApiError ? err.status : 0;
+    return (
+      <CenteredNote
+        text={
+          status === 404
+            ? "Поездка не найдена"
+            : status === 403
+              ? "Нет доступа к этой поездке"
+              : "Не удалось загрузить поездку"
+        }
+        sub={<Link to="/trips" className="btn btn-ghost btn-sm">← На дашборд</Link>}
+      />
+    );
+  }
+
+  const trip = tripQuery.data;
+  if (!trip) return <CenteredNote text="Поездка не найдена" />;
+
+  const subtitle = [
+    trip.destinationLabel,
+    formatTripDates(trip.startDate, trip.endDate),
+    `${trip.members.length} ${trip.members.length === 1 ? "человек" : "человек"}`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
     <div
@@ -121,12 +164,8 @@ export function TripDetailPage() {
         </div>
 
         <div style={{ padding: "0 8px" }}>
-          <h2 style={{ fontSize: 17, lineHeight: 1.2, fontWeight: 600 }}>
-            {ACTIVE_TRIP.title}
-          </h2>
-          <p style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 2 }}>
-            {ACTIVE_TRIP.subtitle}
-          </p>
+          <h2 style={{ fontSize: 17, lineHeight: 1.2, fontWeight: 600 }}>{trip.title}</h2>
+          <p style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 2 }}>{subtitle}</p>
         </div>
 
         <nav style={{ display: "flex", flexDirection: "column", gap: 1 }}>
@@ -178,7 +217,7 @@ export function TripDetailPage() {
             alignItems: "center",
           }}
         >
-          <Avatar id="me" size={26} ring={false} />
+          {auth.user && <UserAvatar user={auth.user} size={26} ring={false} />}
           <LangSwitcher />
         </div>
       </aside>
@@ -187,9 +226,7 @@ export function TripDetailPage() {
         {tab === "chat" && <ChatTab />}
         {tab === "summary" && <SummaryTab onGoVotes={() => setTab("votes")} />}
         {tab === "map" && <MapTab />}
-        {tab === "itin" && (
-          <ItineraryTab openDays={openDays} setOpenDays={setOpenDays} />
-        )}
+        {tab === "itin" && <ItineraryTab tripId={tripId} />}
         {tab === "votes" && <VotesTab votes={votes} castVote={castVote} />}
         {tab === "budget" && (
           <BudgetTab expenses={expenses} onAdd={() => setExpenseModal(true)} />
@@ -203,6 +240,25 @@ export function TripDetailPage() {
         onClose={() => setExpenseModal(false)}
         onAdd={addExpense}
       />
+    </div>
+  );
+}
+
+function CenteredNote({ text, sub }: { text: string; sub?: React.ReactNode }) {
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 12,
+        color: "var(--ink-3)",
+      }}
+    >
+      <div className="mono" style={{ fontSize: 13 }}>{text}</div>
+      {sub}
     </div>
   );
 }

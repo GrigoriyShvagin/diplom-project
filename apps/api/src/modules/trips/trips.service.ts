@@ -49,6 +49,17 @@ export class TripsService {
     return trip;
   }
 
+  async assertMember(tripId: string, userId: string): Promise<void> {
+    const trip = await this.prisma.trip.findUnique({
+      where: { id: tripId },
+      select: { ownerId: true, members: { select: { userId: true } } },
+    });
+    if (!trip) throw new NotFoundException();
+    if (trip.ownerId === userId) return;
+    if (trip.members.some((m) => m.userId === userId)) return;
+    throw new ForbiddenException();
+  }
+
   async create(userId: string, dto: CreateTripDto) {
     const trip = await this.prisma.trip.create({
       data: {
