@@ -10,7 +10,6 @@ import {
 } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/shared/lib/auth-context";
-import { Avatar } from "@/shared/ui/Avatar";
 import { UserAvatar, UserAvatarStack } from "@/shared/ui/UserAvatar";
 import { listMessages, sendMessage, type ApiAuthor, type ApiMessage } from "@/shared/api/chat";
 import { getTrip } from "@/shared/api/trips";
@@ -449,7 +448,23 @@ function MentionPopup({
           onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
         >
           {o.id === "bot" ? (
-            <Avatar id="bot" size={26} ring={false} />
+            <span
+              style={{
+                width: 26,
+                height: 26,
+                borderRadius: 8,
+                background: "var(--terracotta)",
+                color: "var(--paper)",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 12,
+                fontWeight: 600,
+                flexShrink: 0,
+              }}
+            >
+              Г
+            </span>
           ) : (
             <UserAvatar
               user={{ id: o.id, name: o.handle, avatarUrl: null }}

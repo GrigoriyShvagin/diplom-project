@@ -2,7 +2,6 @@ import { useNavigate } from "react-router-dom";
 import { useT } from "@/shared/lib/i18n";
 import { Logo } from "@/shared/ui/Logo";
 import { LangSwitcher } from "@/shared/ui/LangSwitcher";
-import { AvatarStack } from "@/shared/ui/Avatar";
 
 export function LandingPage() {
   const { t } = useT();
@@ -254,7 +253,26 @@ export function LandingPage() {
               <span className="mono" style={{ fontSize: 11, color: "var(--ink-3)" }}>
                 13:00 · 1.5 ч
               </span>
-              <AvatarStack ids={["me", "m1", "m2", "m3"]} size={20} max={4} />
+              <span style={{ display: "inline-flex" }}>
+                {[
+                  "oklch(0.62 0.135 40)",
+                  "oklch(0.78 0.10 60)",
+                  "oklch(0.72 0.10 200)",
+                  "oklch(0.75 0.10 145)",
+                ].map((c, i) => (
+                  <span
+                    key={c}
+                    style={{
+                      width: 20,
+                      height: 20,
+                      borderRadius: "50%",
+                      background: c,
+                      border: "2px solid var(--paper)",
+                      marginLeft: i === 0 ? 0 : -6,
+                    }}
+                  />
+                ))}
+              </span>
             </div>
           </div>
           <div
