@@ -6,12 +6,14 @@ import { Modal } from "@/shared/ui/Modal";
 import { UserAvatar } from "@/shared/ui/UserAvatar";
 import { createExpense, type ApiExpense } from "@/shared/api/expenses";
 import type { ApiTripMember } from "@/shared/api/trips";
+import { EXPENSE_CATEGORIES, type ExpenseCategory } from "@/shared/lib/categories";
 
 type FormState = {
   title: string;
   amount: string;
   payerId: string;
   split: string[];
+  category: ExpenseCategory;
 };
 
 const chipStyle = (selected: boolean, accent: "ink" | "terracotta" = "ink"): CSSProperties => ({
@@ -59,6 +61,7 @@ export function AddExpenseModal({
     amount: "",
     payerId: defaultPayer,
     split: defaultSplit,
+    category: "other",
   });
 
   // re-init when the modal opens
@@ -70,6 +73,7 @@ export function AddExpenseModal({
       amount: "",
       payerId: defaultPayer,
       split: defaultSplit,
+      category: "other",
     });
     setSeedKey(openKey);
   }
@@ -90,6 +94,7 @@ export function AddExpenseModal({
         amount: Number(form.amount),
         payerId: form.payerId,
         splitUserIds: form.split,
+        category: form.category,
       }),
     onSuccess: (expense) => onCreated(expense),
   });
@@ -128,6 +133,36 @@ export function AddExpenseModal({
             value={form.amount}
             onChange={(e) => setForm({ ...form, amount: e.target.value })}
           />
+        </div>
+        <div>
+          <label className="label">Категория</label>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {EXPENSE_CATEGORIES.map((c) => {
+              const sel = form.category === c.key;
+              return (
+                <button
+                  key={c.key}
+                  onClick={() => setForm({ ...form, category: c.key })}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "6px 12px",
+                    borderRadius: "var(--r-pill)",
+                    border: `1px solid ${sel ? "var(--ink)" : "var(--line)"}`,
+                    background: sel ? "var(--paper-2)" : "var(--paper)",
+                    fontSize: 13,
+                    fontWeight: sel ? 500 : 400,
+                  }}
+                >
+                  <span
+                    style={{ width: 8, height: 8, borderRadius: 999, background: c.color }}
+                  />
+                  {c.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
         <div>
           <label className="label">{t("trip.budget.payer")}</label>

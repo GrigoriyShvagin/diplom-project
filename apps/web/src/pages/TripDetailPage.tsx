@@ -197,7 +197,7 @@ export function TripDetailPage() {
         {tab === "votes" && <VotesTab tripId={tripId} />}
         {tab === "budget" && <BudgetTab tripId={tripId} />}
         {tab === "members" && <MembersTab tripId={tripId} />}
-        {tab === "final" && <FinalTab />}
+        {tab === "final" && <FinalTab tripId={tripId} />}
       </main>
     </div>
   );
