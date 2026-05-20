@@ -189,7 +189,9 @@ export function TripDetailPage() {
 
       <main style={{ flex: 1, minWidth: 0, padding: "32px 40px" }}>
         {tab === "chat" && <ChatTab tripId={tripId} />}
-        {tab === "summary" && <SummaryTab onGoVotes={() => setTab("votes")} />}
+        {tab === "summary" && (
+          <SummaryTab tripId={tripId} onGoVotes={() => setTab("votes")} />
+        )}
         {tab === "map" && <MapTab />}
         {tab === "itin" && <ItineraryTab tripId={tripId} />}
         {tab === "votes" && <VotesTab tripId={tripId} />}

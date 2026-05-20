@@ -32,6 +32,103 @@ export class AiService {
     return this.client !== null;
   }
 
+  async analyzeChat(
+    tripId: string,
+    messages: { author: string; text: string; isBot: boolean }[],
+  ): Promise<ChatAnalysisResult> {
+    if (!this.client) {
+      throw new ServiceUnavailableException(
+        "AI не настроен. Добавьте ANTHROPIC_API_KEY в apps/api/.env",
+      );
+    }
+    const tripCtx = await this.buildTripContext(tripId);
+    const transcript = messages
+      .map((m) => `${m.isBot ? "Гид" : m.author}: ${m.text}`)
+      .join("\n");
+
+    const system = `Ты анализируешь чат группы друзей, планирующих путешествие. Извлеки конкретные договорённости и разногласия из переписки.
+
+Контекст поездки:
+${tripCtx}
+
+Правила:
+- Включай только то, что реально обсуждалось в чате. Пустые массивы — это нормально.
+- "sources" = сколько сообщений поддерживают этот пункт (оценка).
+- "strong: true" для пунктов с явным консенсусом; "conflict: true" для разногласий.
+- Заголовки секций (title) на русском.
+- Вызови инструмент save_chat_analysis с результатом.`;
+
+    const tool: Anthropic.Tool = {
+      name: "save_chat_analysis",
+      description: "Сохранить структурированный анализ чата поездки",
+      input_schema: {
+        type: "object",
+        properties: {
+          summary: { type: "string", description: "1–2 предложения общего обзора" },
+          sections: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                key: {
+                  type: "string",
+                  enum: [
+                    "directions",
+                    "budget",
+                    "dates",
+                    "interests",
+                    "constraints",
+                    "conflicts",
+                  ],
+                },
+                title: { type: "string" },
+                items: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      text: { type: "string" },
+                      strong: { type: "boolean" },
+                      conflict: { type: "boolean" },
+                      sources: { type: "integer" },
+                    },
+                    required: ["text"],
+                  },
+                },
+              },
+              required: ["key", "title", "items"],
+            },
+          },
+        },
+        required: ["summary", "sections"],
+      },
+    };
+
+    try {
+      const response = await this.client.messages.create({
+        model: this.model,
+        max_tokens: 2000,
+        system,
+        tools: [tool],
+        tool_choice: { type: "tool", name: "save_chat_analysis" },
+        messages: [
+          {
+            role: "user",
+            content: `Вот переписка чата (${messages.length} сообщений):\n\n${transcript || "(пусто)"}`,
+          },
+        ],
+      });
+      const block = response.content.find((b) => b.type === "tool_use");
+      if (!block || block.type !== "tool_use") {
+        throw new Error("no tool_use block in response");
+      }
+      return block.input as ChatAnalysisResult;
+    } catch (err) {
+      this.logger.error("Anthropic analyze failed", err as Error);
+      throw new ServiceUnavailableException("Не удалось проанализировать чат");
+    }
+  }
+
   async askGuide(tripId: string, userId: string, dto: AskGuideDto): Promise<string> {
     if (!this.client) {
       throw new ServiceUnavailableException(
@@ -134,6 +231,17 @@ ${recent || "(пусто)"}
     return lines.join("\n");
   }
 }
+
+export type ChatAnalysisSection = {
+  key: "directions" | "budget" | "dates" | "interests" | "constraints" | "conflicts";
+  title: string;
+  items: { text: string; strong?: boolean; conflict?: boolean; sources?: number }[];
+};
+
+export type ChatAnalysisResult = {
+  summary: string;
+  sections: ChatAnalysisSection[];
+};
 
 function formatRecent(msgs: RecentMessageDto[]): string {
   return msgs

@@ -86,4 +86,70 @@ export class ChatService {
 
     return { messages, aiError };
   }
+
+  async runAnalysis(tripId: string, userId: string) {
+    await this.trips.assertMember(tripId, userId);
+    const msgs = await this.prisma.tripMessage.findMany({
+      where: { tripId },
+      orderBy: { createdAt: "asc" },
+      take: 500,
+      select: { isBot: true, text: true, author: { select: { name: true } } },
+    });
+    const result = await this.ai.analyzeChat(
+      tripId,
+      msgs.map((m) => ({
+        author: m.isBot ? "Гид" : (m.author?.name ?? "?"),
+        text: m.text,
+        isBot: m.isBot,
+      })),
+    );
+
+    const byKey = (k: string) =>
+      result.sections.find((s) => s.key === k) ?? null;
+
+    const saved = await this.prisma.chatAnalysis.create({
+      data: {
+        tripId,
+        summary: result.summary,
+        destinationsJson: (byKey("directions") ?? undefined) as object | undefined,
+        budgetSignalsJson: (byKey("budget") ?? undefined) as object | undefined,
+        interestsJson: (byKey("interests") ?? undefined) as object | undefined,
+        rawModelOutput: result as unknown as object,
+      },
+      select: { id: true, summary: true, rawModelOutput: true, createdAt: true },
+    });
+
+    return this.shapeAnalysis(saved, msgs.length);
+  }
+
+  async getLatestAnalysis(tripId: string, userId: string) {
+    await this.trips.assertMember(tripId, userId);
+    const latest = await this.prisma.chatAnalysis.findFirst({
+      where: { tripId },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, summary: true, rawModelOutput: true, createdAt: true },
+    });
+    if (!latest) return null;
+    const messageCount = await this.prisma.tripMessage.count({ where: { tripId } });
+    return this.shapeAnalysis(latest, messageCount);
+  }
+
+  private shapeAnalysis(
+    row: {
+      id: string;
+      summary: string | null;
+      rawModelOutput: unknown;
+      createdAt: Date;
+    },
+    messageCount: number,
+  ) {
+    const raw = (row.rawModelOutput ?? {}) as { sections?: unknown };
+    return {
+      id: row.id,
+      summary: row.summary,
+      sections: Array.isArray(raw.sections) ? raw.sections : [],
+      createdAt: row.createdAt,
+      messageCount,
+    };
+  }
 }

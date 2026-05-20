@@ -35,3 +35,32 @@ export function sendMessage(tripId: string, text: string) {
 export function getAiStatus() {
   return apiFetch<{ enabled: boolean }>("/ai/status");
 }
+
+export type AnalysisItem = {
+  text: string;
+  strong?: boolean;
+  conflict?: boolean;
+  sources?: number;
+};
+
+export type AnalysisSection = {
+  key: "directions" | "budget" | "dates" | "interests" | "constraints" | "conflicts";
+  title: string;
+  items: AnalysisItem[];
+};
+
+export type ChatAnalysis = {
+  id: string;
+  summary: string | null;
+  sections: AnalysisSection[];
+  createdAt: string;
+  messageCount: number;
+};
+
+export function getAnalysis(tripId: string) {
+  return apiFetch<ChatAnalysis | null>(`/trips/${tripId}/chat/analysis`);
+}
+
+export function runAnalysis(tripId: string) {
+  return apiFetch<ChatAnalysis>(`/trips/${tripId}/chat/analyze`, { method: "POST" });
+}

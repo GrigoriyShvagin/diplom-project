@@ -22,4 +22,14 @@ export class ChatController {
   ) {
     return this.chat.send(tripId, user.id, dto);
   }
+
+  @Get("analysis")
+  analysis(@Param("tripId") tripId: string, @CurrentUser() user: AuthUser) {
+    return this.chat.getLatestAnalysis(tripId, user.id);
+  }
+
+  @Post("analyze")
+  analyze(@Param("tripId") tripId: string, @CurrentUser() user: AuthUser) {
+    return this.chat.runAnalysis(tripId, user.id);
+  }
 }
