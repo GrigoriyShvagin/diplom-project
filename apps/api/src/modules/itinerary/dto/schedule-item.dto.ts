@@ -1,8 +1,10 @@
 import {
   IsIn,
   IsInt,
+  IsNumber,
   IsOptional,
   IsString,
+  Max,
   MaxLength,
   Min,
   MinLength,
@@ -38,6 +40,23 @@ export class CreateScheduleItemDto {
   @IsInt()
   @Min(0)
   sortOrder?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(-90)
+  @Max(90)
+  lat?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(-180)
+  @Max(180)
+  lng?: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(300)
+  address?: string;
 }
 
 export class UpdateScheduleItemDto {
@@ -69,4 +88,21 @@ export class UpdateScheduleItemDto {
   @IsInt()
   @Min(0)
   sortOrder?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(-90)
+  @Max(90)
+  lat?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(-180)
+  @Max(180)
+  lng?: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(300)
+  address?: string;
 }

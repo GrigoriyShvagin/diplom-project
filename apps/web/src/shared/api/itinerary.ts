@@ -8,6 +8,9 @@ export type ApiScheduleItem = {
   startTime: string | null;
   endTime: string | null;
   sortOrder: number;
+  lat: number | null;
+  lng: number | null;
+  address: string | null;
   tripDayId: string;
   placeCacheId: string | null;
 };
@@ -31,6 +34,9 @@ export type CreateScheduleItemInput = {
   description?: string;
   startTime?: string;
   endTime?: string;
+  lat?: number;
+  lng?: number;
+  address?: string;
 };
 
 export function listDays(tripId: string) {

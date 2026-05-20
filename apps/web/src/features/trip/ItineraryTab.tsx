@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@/shared/lib/i18n";
 import {
@@ -9,6 +9,7 @@ import {
   type ApiScheduleItem,
   type ApiTripDay,
 } from "@/shared/api/itinerary";
+import { geocode, geocodingEnabled, type GeoResult } from "@/shared/lib/geocode";
 import { TabHeader } from "./TabHeader";
 
 const TYPE_ICON: Record<ApiScheduleItem["type"], string> = {
@@ -338,7 +339,56 @@ function AddItemForm({
     title: string;
     startTime: string;
     description: string;
-  }>({ type: "place", title: "", startTime: "", description: "" });
+    lat: number | null;
+    lng: number | null;
+    address: string | null;
+  }>({
+    type: "place",
+    title: "",
+    startTime: "",
+    description: "",
+    lat: null,
+    lng: null,
+    address: null,
+  });
+
+  const [placeQuery, setPlaceQuery] = useState("");
+  const [results, setResults] = useState<GeoResult[]>([]);
+  const [searching, setSearching] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!geocodingEnabled() || placeQuery.trim().length < 2) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setResults([]);
+      return;
+    }
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    setSearching(true);
+    debounceRef.current = setTimeout(async () => {
+      const r = await geocode(placeQuery);
+      setResults(r);
+      setSearching(false);
+    }, 350);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [placeQuery]);
+
+  const pickPlace = (g: GeoResult) => {
+    setForm((f) => ({
+      ...f,
+      title: f.title.trim() ? f.title : g.name,
+      lat: g.lat,
+      lng: g.lng,
+      address: g.address,
+    }));
+    setPlaceQuery("");
+    setResults([]);
+  };
+
+  const clearPlace = () =>
+    setForm((f) => ({ ...f, lat: null, lng: null, address: null }));
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -347,6 +397,9 @@ function AddItemForm({
         title: form.title.trim(),
         startTime: form.startTime || undefined,
         description: form.description.trim() || undefined,
+        lat: form.lat ?? undefined,
+        lng: form.lng ?? undefined,
+        address: form.address ?? undefined,
       }),
     onSuccess: () => onDone(),
   });
@@ -385,6 +438,116 @@ function AddItemForm({
           style={{ padding: "8px 10px", fontSize: 13 }}
         />
       </div>
+
+      {geocodingEnabled() && (
+        <div style={{ position: "relative" }}>
+          {form.lat != null && form.lng != null ? (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "8px 10px",
+                background: "var(--paper-2)",
+                border: "1px solid var(--line)",
+                borderRadius: "var(--r-md)",
+                fontSize: 13,
+              }}
+            >
+              <span style={{ color: "var(--moss)" }}>📍</span>
+              <span
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  color: "var(--ink-2)",
+                }}
+                title={form.address ?? undefined}
+              >
+                {form.address}
+              </span>
+              <button
+                onClick={clearPlace}
+                style={{ color: "var(--ink-3)", fontSize: 14, padding: "0 4px" }}
+                title="Убрать место"
+              >
+                ×
+              </button>
+            </div>
+          ) : (
+            <input
+              className="input"
+              placeholder="🔍 Найти место на карте (необязательно)"
+              value={placeQuery}
+              onChange={(e) => setPlaceQuery(e.target.value)}
+              style={{ padding: "8px 10px", fontSize: 13 }}
+            />
+          )}
+          {results.length > 0 && (
+            <div
+              style={{
+                position: "absolute",
+                top: "calc(100% + 4px)",
+                left: 0,
+                right: 0,
+                background: "var(--paper)",
+                border: "1px solid var(--line)",
+                borderRadius: "var(--r-md)",
+                boxShadow: "var(--shadow-md)",
+                overflow: "hidden",
+                zIndex: 5,
+                maxHeight: 220,
+                overflowY: "auto",
+              }}
+            >
+              {results.map((g) => (
+                <button
+                  key={g.id}
+                  onClick={() => pickPlace(g)}
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    textAlign: "left",
+                    padding: "8px 12px",
+                    fontSize: 13,
+                    borderBottom: "1px solid var(--line)",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.background = "var(--paper-2)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.background = "transparent")
+                  }
+                >
+                  <div style={{ fontWeight: 500 }}>{g.name}</div>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      color: "var(--ink-3)",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {g.address}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+          {searching && (
+            <div
+              className="mono"
+              style={{ fontSize: 10, color: "var(--ink-3)", marginTop: 4 }}
+            >
+              ищу…
+            </div>
+          )}
+        </div>
+      )}
+
       <input
         className="input"
         placeholder="Заметка (необязательно)"

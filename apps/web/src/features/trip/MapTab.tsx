@@ -1,19 +1,62 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { listDays } from "@/shared/api/itinerary";
+import { getTrip } from "@/shared/api/trips";
 import { TabHeader } from "./TabHeader";
 import { MapboxMap, type MapMarker } from "./MapboxMap";
 
-type Day = { id: number; color: string; label: string };
-
-const DAYS: Day[] = [
-  { id: 1, color: "var(--terracotta)", label: "День 1 · Тбилиси" },
-  { id: 2, color: "var(--teal)", label: "День 2 · Кахетия" },
-  { id: 3, color: "var(--moss)", label: "День 3 · Казбеги" },
+const DAY_COLORS = [
+  "var(--terracotta)",
+  "var(--teal)",
+  "var(--moss)",
+  "oklch(0.65 0.10 80)",
+  "oklch(0.60 0.12 320)",
+  "oklch(0.55 0.10 25)",
 ];
 
-export function MapTab() {
+export function MapTab({ tripId }: { tripId: string }) {
   const [activeDay, setActiveDay] = useState<number | null>(null);
   const token = import.meta.env.VITE_MAPBOX_TOKEN;
   const hasToken = typeof token === "string" && token.length > 0;
+
+  const daysQuery = useQuery({
+    queryKey: ["trips", tripId, "days"] as const,
+    queryFn: () => listDays(tripId),
+  });
+  const tripQuery = useQuery({
+    queryKey: ["trips", tripId] as const,
+    queryFn: () => getTrip(tripId),
+  });
+
+  const days = useMemo(() => daysQuery.data ?? [], [daysQuery.data]);
+
+  const { markers, center, pinnedCount, totalItems } = useMemo(() => {
+    const markers: MapMarker[] = [];
+    let totalItems = 0;
+    days.forEach((d, di) => {
+      const color = DAY_COLORS[di % DAY_COLORS.length] ?? "var(--terracotta)";
+      d.scheduleItems.forEach((it) => {
+        totalItems += 1;
+        if (it.lat != null && it.lng != null) {
+          markers.push({
+            id: it.id,
+            lng: it.lng,
+            lat: it.lat,
+            color,
+            label: d.dayNumber,
+          });
+        }
+      });
+    });
+    const visible =
+      activeDay == null
+        ? markers
+        : markers.filter((m) => m.label === activeDay);
+    const center: [number, number] | undefined = markers.length
+      ? [markers[0]!.lng, markers[0]!.lat]
+      : undefined;
+    return { markers: visible, center, pinnedCount: markers.length, totalItems };
+  }, [days, activeDay]);
 
   return (
     <div
@@ -24,7 +67,11 @@ export function MapTab() {
         height: "calc(100vh - 64px)",
       }}
     >
-      <TabHeader eyebrow="карта · маршрут" title="Маршрут" italic="по дням" />
+      <TabHeader
+        eyebrow={`карта · ${pinnedCount} из ${totalItems} точек с координатами`}
+        title="Маршрут"
+        italic="по дням"
+      />
 
       <div style={{ display: "flex", gap: 16, flex: 1, minHeight: 0 }}>
         <div
@@ -34,15 +81,13 @@ export function MapTab() {
             borderRadius: "var(--r-lg)",
             overflow: "hidden",
             border: "1px solid var(--line)",
-            background: hasToken
-              ? "var(--paper-2)"
-              : "linear-gradient(180deg, oklch(0.93 0.02 100) 0%, oklch(0.88 0.025 95) 100%)",
+            background: "var(--paper-2)",
           }}
         >
           {hasToken ? (
-            <MapboxMap token={token} markers={demoMarkers(activeDay)} />
+            <MapboxMap token={token} markers={markers} center={center} zoom={center ? 8 : 4} />
           ) : (
-            <SvgFallbackMap activeDay={activeDay} />
+            <NoToken />
           )}
 
           <div
@@ -73,6 +118,36 @@ export function MapTab() {
             />
             {hasToken ? "mapbox · live" : "mapbox · не настроен"}
           </div>
+
+          {hasToken && pinnedCount === 0 && (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                pointerEvents: "none",
+              }}
+            >
+              <div
+                style={{
+                  background: "var(--paper)",
+                  border: "1px solid var(--line)",
+                  borderRadius: "var(--r-md)",
+                  padding: "12px 18px",
+                  fontSize: 13,
+                  color: "var(--ink-2)",
+                  textAlign: "center",
+                  maxWidth: 320,
+                  boxShadow: "var(--shadow-md)",
+                }}
+              >
+                Пока ни у одного пункта нет координат. На вкладке «Маршрут»
+                добавьте место через поиск — и оно появится тут.
+              </div>
+            </div>
+          )}
         </div>
 
         <div style={{ width: 260, display: "flex", flexDirection: "column", gap: 8 }}>
@@ -80,271 +155,121 @@ export function MapTab() {
             <div className="eyebrow" style={{ marginBottom: 8 }}>
               дни маршрута
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              {DAYS.map((d) => (
-                <button
-                  key={d.id}
-                  onMouseEnter={() => setActiveDay(d.id)}
-                  onMouseLeave={() => setActiveDay(null)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 12,
-                    padding: "10px 12px",
-                    borderRadius: "var(--r-md)",
-                    background: activeDay === d.id ? "var(--paper-2)" : "transparent",
-                    transition: "background 0.12s",
-                    textAlign: "left",
-                  }}
-                >
-                  <span
-                    style={{
-                      width: 10,
-                      height: 10,
-                      borderRadius: "50%",
-                      background: d.color,
-                    }}
-                  />
-                  <span style={{ fontSize: 13 }}>{d.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {!hasToken && (
-            <div
-              className="card"
-              style={{
-                padding: 16,
-                background: "oklch(from var(--terracotta) l c h / 0.06)",
-                borderColor: "oklch(from var(--terracotta) l c h / 0.3)",
-              }}
-            >
-              <div
-                className="eyebrow"
-                style={{ color: "var(--terracotta-ink)", marginBottom: 8 }}
-              >
-                включить mapbox
+            {days.length === 0 ? (
+              <div className="mono" style={{ fontSize: 11, color: "var(--ink-3)" }}>
+                дней пока нет
               </div>
-              <p style={{ fontSize: 12, lineHeight: 1.5, color: "var(--ink-2)", margin: 0 }}>
-                Добавьте <code>VITE_MAPBOX_TOKEN=pk....</code> в{" "}
-                <code>apps/web/.env</code> и перезапустите dev-сервер — карта станет
-                настоящей.
-              </p>
-              <p
-                style={{
-                  fontSize: 11,
-                  color: "var(--ink-3)",
-                  margin: "8px 0 0",
-                }}
-              >
-                Бесплатный токен на{" "}
-                <a
-                  href="https://account.mapbox.com/access-tokens/"
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{
-                    color: "var(--terracotta)",
-                    textDecoration: "underline",
-                  }}
-                >
-                  account.mapbox.com
-                </a>
-                .
-              </p>
-            </div>
-          )}
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                {days.map((d, di) => {
+                  const color = DAY_COLORS[di % DAY_COLORS.length];
+                  const pinned = d.scheduleItems.filter(
+                    (it) => it.lat != null && it.lng != null,
+                  ).length;
+                  return (
+                    <button
+                      key={d.id}
+                      onMouseEnter={() => setActiveDay(d.dayNumber)}
+                      onMouseLeave={() => setActiveDay(null)}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 12,
+                        padding: "10px 12px",
+                        borderRadius: "var(--r-md)",
+                        background:
+                          activeDay === d.dayNumber ? "var(--paper-2)" : "transparent",
+                        transition: "background 0.12s",
+                        textAlign: "left",
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: 10,
+                          height: 10,
+                          borderRadius: "50%",
+                          background: color,
+                          flexShrink: 0,
+                        }}
+                      />
+                      <span style={{ flex: 1, fontSize: 13 }}>
+                        День {d.dayNumber}
+                      </span>
+                      <span
+                        className="mono"
+                        style={{ fontSize: 10, color: "var(--ink-3)" }}
+                      >
+                        {pinned}/{d.scheduleItems.length}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
 
           <div className="card" style={{ padding: 16 }}>
             <div className="eyebrow" style={{ marginBottom: 12 }}>
               сводка
             </div>
-            <Stat label="точек на маршруте" value="—" />
-            <Stat label="км в общей сложности" value="—" />
-            <Stat label="ночёвки" value="—" />
-            <div
-              className="mono"
-              style={{
-                fontSize: 10,
-                color: "var(--ink-3)",
-                marginTop: 8,
-                lineHeight: 1.5,
-              }}
-            >
-              появится, когда у мест появятся координаты
-            </div>
+            <Stat label="дней" value={String(days.length)} />
+            <Stat label="точек с координатами" value={String(pinnedCount)} />
+            <Stat label="пунктов всего" value={String(totalItems)} />
           </div>
 
-          <div
-            className="card"
-            style={{
-              padding: 16,
-              background: "var(--ink)",
-              color: "var(--paper)",
-              border: "none",
-            }}
-          >
+          {tripQuery.data?.destinationLabel && (
             <div
-              className="eyebrow"
-              style={{ color: "oklch(0.65 0.012 65)", marginBottom: 8 }}
+              className="card"
+              style={{
+                padding: 16,
+                background: "var(--ink)",
+                color: "var(--paper)",
+                border: "none",
+              }}
             >
-              совет
+              <div
+                className="eyebrow"
+                style={{ color: "oklch(0.65 0.012 65)", marginBottom: 8 }}
+              >
+                направление
+              </div>
+              <p style={{ fontSize: 14, lineHeight: 1.5, margin: 0 }}>
+                {tripQuery.data.destinationLabel}
+              </p>
             </div>
-            <p style={{ fontSize: 13, lineHeight: 1.5, margin: 0 }}>
-              На <span style={{ color: "var(--terracotta-soft)" }}>третий день</span>{" "}
-              заложите запас по времени — Военно-Грузинская дорога часто перекрыта.
-            </p>
-          </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-function demoMarkers(activeDay: number | null): MapMarker[] {
-  // Placeholder geo-pins around the Caucasus until places module ships
-  const pins: MapMarker[] = [
-    { id: "1a", lng: 44.7833, lat: 41.7167, color: "oklch(0.62 0.135 40)", label: 1 }, // Тбилиси
-    { id: "2a", lng: 45.92, lat: 41.92, color: "oklch(0.42 0.06 205)", label: 2 }, // Сигнахи
-    { id: "3a", lng: 44.652, lat: 42.66, color: "oklch(0.50 0.07 150)", label: 3 }, // Казбеги
-  ];
-  if (activeDay == null) return pins;
-  const map: Record<number, string> = { 1: "1a", 2: "2a", 3: "3a" };
-  const id = map[activeDay];
-  return pins.filter((p) => p.id === id);
-}
-
-function SvgFallbackMap({ activeDay }: { activeDay: number | null }) {
+function NoToken() {
   return (
-    <svg
-      viewBox="0 0 800 600"
-      preserveAspectRatio="xMidYMid slice"
-      style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+    <div
+      style={{
+        position: "absolute",
+        inset: 0,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 24,
+      }}
     >
-      <defs>
-        <pattern id="topo" width="40" height="40" patternUnits="userSpaceOnUse">
-          <path
-            d="M 0 20 Q 20 10 40 20"
-            stroke="oklch(0.78 0.04 90)"
-            strokeWidth="0.5"
-            fill="none"
-          />
-          <path
-            d="M 0 32 Q 20 22 40 32"
-            stroke="oklch(0.78 0.04 90)"
-            strokeWidth="0.5"
-            fill="none"
-          />
-        </pattern>
-      </defs>
-      <rect width="800" height="600" fill="url(#topo)" />
-      <path
-        d="M 0 380 Q 100 360 220 390 T 420 400 T 600 380 T 800 410 L 800 600 L 0 600 Z"
-        fill="oklch(0.78 0.04 220)"
-        opacity="0.55"
-      />
-      <path
-        d="M 60 480 Q 180 360 320 340 T 540 220 T 720 120"
-        stroke="oklch(0.50 0.02 80)"
-        strokeWidth="2"
-        fill="none"
-        strokeDasharray="2 4"
-        opacity="0.4"
-      />
-      <g opacity={activeDay === null || activeDay === 1 ? 1 : 0.25}>
-        <path
-          d="M 130 460 L 170 440 L 200 450 L 230 430 L 210 470"
-          stroke="var(--terracotta)"
-          strokeWidth="3"
-          fill="none"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        {([[130, 460], [170, 440], [200, 450], [230, 430], [210, 470]] as const).map(
-          ([x, y], i) => (
-            <Pin key={`d1-${i}`} x={x} y={y} color="var(--terracotta)" n={i + 1} />
-          ),
-        )}
-      </g>
-      <g opacity={activeDay === null || activeDay === 2 ? 1 : 0.25}>
-        <path
-          d="M 230 430 Q 350 380 480 320"
-          stroke="var(--teal)"
-          strokeWidth="3"
-          fill="none"
-          strokeDasharray="6 4"
-          strokeLinecap="round"
-        />
-        <Pin x={350} y={380} color="var(--teal)" n="2a" />
-        <Pin x={480} y={320} color="var(--teal)" n="2b" />
-      </g>
-      <g opacity={activeDay === null || activeDay === 3 ? 1 : 0.25}>
-        <path
-          d="M 230 430 Q 300 280 540 220 T 720 120"
-          stroke="var(--moss)"
-          strokeWidth="3"
-          fill="none"
-          strokeDasharray="6 4"
-          strokeLinecap="round"
-        />
-        <Pin x={540} y={220} color="var(--moss)" n="3a" />
-        <Pin x={720} y={120} color="var(--moss)" n="3b" big />
-      </g>
-      <g opacity="0.5">
-        <path
-          d="M 600 80 L 640 30 L 680 75 L 720 50 L 760 90 Z"
-          fill="oklch(0.50 0.04 80)"
-        />
-        <path d="M 600 80 L 640 30 L 660 55 L 640 80" fill="oklch(0.40 0.04 80)" />
-      </g>
-      <g transform="translate(740 530)">
-        <circle r="22" fill="var(--paper)" stroke="var(--ink)" strokeWidth="1" />
-        <path d="M 0 -16 L 4 0 L 0 16 L -4 0 Z" fill="var(--terracotta)" />
-        <text
-          textAnchor="middle"
-          dy="-18"
-          fill="var(--ink)"
-          style={{ fontSize: 10, fontFamily: "var(--font-mono)" }}
-        >
-          С
-        </text>
-      </g>
-    </svg>
-  );
-}
-
-function Pin({
-  x,
-  y,
-  color,
-  n,
-  big,
-}: {
-  x: number;
-  y: number;
-  color: string;
-  n: number | string;
-  big?: boolean;
-}) {
-  const r = big ? 14 : 10;
-  return (
-    <g>
-      <circle cx={x} cy={y} r={r} fill={color} />
-      <circle cx={x} cy={y} r={r - 3} fill="var(--paper)" />
-      <text
-        x={x}
-        y={y + 3}
-        textAnchor="middle"
+      <div
         style={{
-          fontSize: 9,
-          fontFamily: "var(--font-mono)",
-          fontWeight: 700,
-          fill: color,
+          textAlign: "center",
+          maxWidth: 360,
+          color: "var(--ink-2)",
+          fontSize: 13,
+          lineHeight: 1.5,
         }}
       >
-        {n}
-      </text>
-    </g>
+        <div style={{ fontSize: 32, marginBottom: 12 }}>🗺️</div>
+        Карта Mapbox не настроена. Добавьте <code>VITE_MAPBOX_TOKEN</code> в{" "}
+        <code>apps/web/.env</code> и перезапустите dev-сервер.
+      </div>
+    </div>
   );
 }
 

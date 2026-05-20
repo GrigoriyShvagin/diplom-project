@@ -88,6 +88,9 @@ model ScheduleItem {
   startTime   String?
   endTime     String?
   sortOrder   Int      @default(0)
+  lat         Float?
+  lng         Float?
+  address     String?
 
   tripDayId String
   tripDay   TripDay @relation(fields: [tripDayId], references: [id], onDelete: Cascade)

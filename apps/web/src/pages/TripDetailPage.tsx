@@ -192,7 +192,7 @@ export function TripDetailPage() {
         {tab === "summary" && (
           <SummaryTab tripId={tripId} onGoVotes={() => setTab("votes")} />
         )}
-        {tab === "map" && <MapTab />}
+        {tab === "map" && <MapTab tripId={tripId} />}
         {tab === "itin" && <ItineraryTab tripId={tripId} />}
         {tab === "votes" && <VotesTab tripId={tripId} />}
         {tab === "budget" && <BudgetTab tripId={tripId} />}

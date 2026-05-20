@@ -15,6 +15,9 @@ const itemSelect = {
   startTime: true,
   endTime: true,
   sortOrder: true,
+  lat: true,
+  lng: true,
+  address: true,
   tripDayId: true,
   placeCacheId: true,
 } as const;
@@ -104,6 +107,9 @@ export class ItineraryService {
         startTime: dto.startTime,
         endTime: dto.endTime,
         sortOrder: nextSort,
+        lat: dto.lat,
+        lng: dto.lng,
+        address: dto.address,
       },
       select: itemSelect,
     });
@@ -134,6 +140,9 @@ export class ItineraryService {
         startTime: dto.startTime,
         endTime: dto.endTime,
         sortOrder: dto.sortOrder,
+        lat: dto.lat,
+        lng: dto.lng,
+        address: dto.address,
       },
       select: itemSelect,
     });
