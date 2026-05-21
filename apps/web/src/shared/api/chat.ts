@@ -74,6 +74,15 @@ export function getSummaries(tripId: string) {
   return apiFetch<ChatSummaryBlock[]>(`/trips/${tripId}/chat/summaries`);
 }
 
+export type ChatSuggestion = { title: string; text: string; ask: string };
+
+export function getSuggestions(tripId: string) {
+  return apiFetch<{ suggestions: ChatSuggestion[] }>(
+    `/trips/${tripId}/chat/suggestions`,
+    { method: "POST" },
+  );
+}
+
 export function getAnalysis(tripId: string) {
   return apiFetch<ChatAnalysis | null>(`/trips/${tripId}/chat/analysis`);
 }

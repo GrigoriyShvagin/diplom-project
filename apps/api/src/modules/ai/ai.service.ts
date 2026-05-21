@@ -244,6 +244,63 @@ ${recent || "(пусто)"}
     }
   }
 
+  async suggest(tripId: string): Promise<SuggestionResult> {
+    if (!this.client) {
+      throw new ServiceUnavailableException("AI не настроен");
+    }
+    const tripCtx = await this.buildTripContext(tripId);
+
+    const system = `Ты — Гид, помощник в планировании путешествия. На основе данных поездки предложи 5–6 конкретных, полезных идей: куда сходить, что посмотреть, что попробовать, на что заложить время.
+
+Данные поездки:
+${tripCtx}
+
+Правила:
+- Опирайся на направление и маршрут выше; используй свои знания о местах этого региона. Если направление известно — НЕ проси уточнений, сразу давай идеи.
+- Где уместно — привязывай идею к конкретному дню (title вида «День 3 · Казбеги»); если день не очевиден — дай тематический заголовок.
+- text — 1–2 фразы с конкретикой: название места, сколько времени займёт, практичный совет.
+- ask — готовый вопрос от лица участника, который можно задать гиду, чтобы углубиться в идею.
+- Предлагай новое, не дублируй уже добавленные пункты маршрута.
+- Пиши на русском. Вызови инструмент save_suggestions.`;
+
+    const tool: Anthropic.Tool = {
+      name: "save_suggestions",
+      description: "Сохранить подсказки по поездке",
+      input_schema: {
+        type: "object",
+        properties: {
+          suggestions: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                title: { type: "string" },
+                text: { type: "string" },
+                ask: { type: "string" },
+              },
+              required: ["title", "text", "ask"],
+            },
+          },
+        },
+        required: ["suggestions"],
+      },
+    };
+
+    const response = await this.client.messages.create({
+      model: this.model,
+      max_tokens: 1500,
+      system,
+      tools: [tool],
+      tool_choice: { type: "tool", name: "save_suggestions" },
+      messages: [{ role: "user", content: "Предложи идеи для нашей поездки." }],
+    });
+    const block = response.content.find((b) => b.type === "tool_use");
+    if (!block || block.type !== "tool_use") {
+      throw new Error("no tool_use block in suggestions response");
+    }
+    return block.input as SuggestionResult;
+  }
+
   private async buildTripContext(tripId: string): Promise<string> {
     const trip = await this.prisma.trip.findUnique({
       where: { id: tripId },
@@ -320,6 +377,9 @@ export type BlockSummaryResult = {
   decisions: string[];
   questions: string[];
 };
+
+export type Suggestion = { title: string; text: string; ask: string };
+export type SuggestionResult = { suggestions: Suggestion[] };
 
 function formatRecent(msgs: RecentMessageDto[]): string {
   return msgs

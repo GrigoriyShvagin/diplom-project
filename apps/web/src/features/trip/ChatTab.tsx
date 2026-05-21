@@ -12,6 +12,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/shared/lib/auth-context";
 import { UserAvatar, UserAvatarStack } from "@/shared/ui/UserAvatar";
 import {
+  getSuggestions,
   getSummaries,
   listMessages,
   sendMessage,
@@ -403,7 +404,12 @@ export function ChatTab({ tripId }: { tripId: string }) {
         </div>
 
         {railOpen && (
-          <ContextRail tripId={tripId} messages={messages} onClose={() => setRailOpen(false)} />
+          <ContextRail
+            tripId={tripId}
+            messages={messages}
+            onClose={() => setRailOpen(false)}
+            onAsk={(text) => setInput(text)}
+          />
         )}
       </div>
     </div>
@@ -783,10 +789,12 @@ function ContextRail({
   tripId,
   messages,
   onClose,
+  onAsk,
 }: {
   tripId: string;
   messages: ApiMessage[];
   onClose: () => void;
+  onAsk: (text: string) => void;
 }) {
   const pinned = messages.filter((m) => m.isBot).slice(-1);
   const summariesQuery = useQuery({
@@ -794,6 +802,12 @@ function ContextRail({
     queryFn: () => getSummaries(tripId),
   });
   const summaries = summariesQuery.data ?? [];
+  const suggestionsQuery = useQuery({
+    queryKey: ["trips", tripId, "suggestions"] as const,
+    queryFn: () => getSuggestions(tripId),
+    staleTime: Infinity,
+  });
+  const suggestions = suggestionsQuery.data?.suggestions ?? [];
   return (
     <div
       style={{
@@ -935,30 +949,84 @@ function ContextRail({
       </div>
 
       <div className="card" style={{ padding: 16 }}>
-        <div className="eyebrow" style={{ marginBottom: 10 }}>
-          попробуйте спросить
+        <div
+          className="eyebrow"
+          style={{
+            marginBottom: 10,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <span>идеи от гида</span>
+          <button
+            onClick={() => suggestionsQuery.refetch()}
+            disabled={suggestionsQuery.isFetching}
+            title="Обновить подсказки"
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: 11,
+              color: "var(--terracotta)",
+              padding: "2px 6px",
+            }}
+          >
+            {suggestionsQuery.isFetching ? "…" : "↻"}
+          </button>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          {[
-            "@гид что сделать в дождливый день?",
-            "@гид что съесть кроме хинкали?",
-            "@гид сколько займёт дорога Тбилиси → Казбеги?",
-            "@гид найди винодельни в Кахетии",
-          ].map((s) => (
+
+        {suggestionsQuery.isLoading && (
+          <div className="mono" style={{ fontSize: 11, color: "var(--ink-3)" }}>
+            гид подбирает идеи…
+          </div>
+        )}
+
+        {suggestionsQuery.isError && (
+          <div className="mono" style={{ fontSize: 11, color: "var(--ink-3)" }}>
+            не удалось получить подсказки
+          </div>
+        )}
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {suggestions.map((s, i) => (
             <button
-              key={s}
+              key={i}
+              onClick={() => onAsk(s.ask)}
+              title="Спросить гида об этом"
               style={{
-                padding: "8px 10px",
-                borderRadius: "var(--r-sm)",
+                padding: "10px 12px",
+                borderRadius: "var(--r-md)",
                 background: "var(--paper-2)",
-                color: "var(--ink-2)",
-                fontSize: 12,
+                border: "1px solid var(--line)",
                 textAlign: "left",
                 lineHeight: 1.4,
-                border: "1px solid var(--line)",
+                transition: "border-color 0.12s",
               }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.borderColor = "var(--terracotta)")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.borderColor = "var(--line)")
+              }
             >
-              {s}
+              <div
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: "var(--ink)",
+                  marginBottom: 3,
+                }}
+              >
+                {s.title}
+              </div>
+              <div style={{ fontSize: 12, color: "var(--ink-2)", marginBottom: 6 }}>
+                {s.text}
+              </div>
+              <div
+                className="mono"
+                style={{ fontSize: 10, color: "var(--terracotta)" }}
+              >
+                спросить →
+              </div>
             </button>
           ))}
         </div>

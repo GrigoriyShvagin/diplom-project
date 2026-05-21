@@ -33,6 +33,11 @@ export class ChatController {
     return this.chat.getSummaries(tripId, user.id);
   }
 
+  @Post("suggestions")
+  suggestions(@Param("tripId") tripId: string, @CurrentUser() user: AuthUser) {
+    return this.chat.getSuggestions(tripId, user.id);
+  }
+
   @Post("analyze")
   analyze(@Param("tripId") tripId: string, @CurrentUser() user: AuthUser) {
     return this.chat.runAnalysis(tripId, user.id);

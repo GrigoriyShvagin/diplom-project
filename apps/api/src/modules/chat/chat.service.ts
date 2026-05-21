@@ -159,6 +159,12 @@ export class ChatService {
     }
   }
 
+  async getSuggestions(tripId: string, userId: string) {
+    await this.trips.assertMember(tripId, userId);
+    if (!this.ai.isEnabled()) return { suggestions: [] };
+    return this.ai.suggest(tripId);
+  }
+
   async getSummaries(tripId: string, userId: string) {
     await this.trips.assertMember(tripId, userId);
     const rows = await this.prisma.chatSummary.findMany({
