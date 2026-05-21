@@ -48,6 +48,7 @@ model Trip {
   analyses     ChatAnalysis[]
   placesCached PlaceCache[]
   messages     TripMessage[]
+  chatSummaries ChatSummary[]
 
   @@map("trips")
 }
@@ -167,6 +168,26 @@ model TripMessage {
 
   @@index([tripId, createdAt])
   @@map("trip_messages")
+}
+
+model ChatSummary {
+  id            String   @id @default(uuid())
+  blockNumber   Int
+  fromIndex     Int
+  toIndex       Int
+  mood          String
+  summary       String
+  topicsJson    Json?
+  decisionsJson Json?
+  questionsJson Json?
+  createdAt     DateTime @default(now())
+
+  tripId String
+  trip   Trip   @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@unique([tripId, blockNumber])
+  @@index([tripId, blockNumber])
+  @@map("chat_summaries")
 }
 
 model TripChat {

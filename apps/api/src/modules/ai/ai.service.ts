@@ -129,7 +129,68 @@ ${tripCtx}
     }
   }
 
-  async askGuide(tripId: string, userId: string, dto: AskGuideDto): Promise<string> {
+  async summarizeBlock(
+    messages: { author: string; text: string; isBot: boolean }[],
+  ): Promise<BlockSummaryResult> {
+    if (!this.client) {
+      throw new ServiceUnavailableException("AI не настроен");
+    }
+    const transcript = messages
+      .map((m) => `${m.isBot ? "Гид" : m.author}: ${m.text}`)
+      .join("\n");
+
+    const system = `Ты сжимаешь фрагмент группового чата путешественников в краткую «память».
+Зафиксируй ОБЩЕЕ НАСТРОЕНИЕ фрагмента, о чём говорили, что решили и какие вопросы остались открытыми.
+
+Правила:
+- Пиши на русском, живо и по делу.
+- mood — одной фразой передай настроение и динамику (напр. «воодушевлённые, спорят о бюджете»).
+- summary — 2–4 предложения.
+- topics / decisions / questions — короткие пункты; пустой массив допустим.
+- Вызови инструмент save_chat_summary.`;
+
+    const tool: Anthropic.Tool = {
+      name: "save_chat_summary",
+      description: "Сохранить сжатую память по фрагменту чата",
+      input_schema: {
+        type: "object",
+        properties: {
+          mood: { type: "string", description: "Общее настроение фрагмента, одной фразой" },
+          summary: { type: "string", description: "2–4 предложения о чём говорили" },
+          topics: { type: "array", items: { type: "string" } },
+          decisions: { type: "array", items: { type: "string" } },
+          questions: { type: "array", items: { type: "string" } },
+        },
+        required: ["mood", "summary", "topics", "decisions", "questions"],
+      },
+    };
+
+    const response = await this.client.messages.create({
+      model: this.model,
+      max_tokens: 700,
+      system,
+      tools: [tool],
+      tool_choice: { type: "tool", name: "save_chat_summary" },
+      messages: [
+        {
+          role: "user",
+          content: `Фрагмент чата (${messages.length} сообщений):\n\n${transcript || "(пусто)"}`,
+        },
+      ],
+    });
+    const block = response.content.find((b) => b.type === "tool_use");
+    if (!block || block.type !== "tool_use") {
+      throw new Error("no tool_use block in summary response");
+    }
+    return block.input as BlockSummaryResult;
+  }
+
+  async askGuide(
+    tripId: string,
+    userId: string,
+    dto: AskGuideDto,
+    rollingSummary?: string,
+  ): Promise<string> {
     if (!this.client) {
       throw new ServiceUnavailableException(
         "AI-гид не настроен. Добавьте ANTHROPIC_API_KEY в apps/api/.env",
@@ -139,16 +200,25 @@ ${tripCtx}
     const tripCtx = await this.buildTripContext(tripId);
     const recent = formatRecent(dto.recentMessages ?? []);
 
+    const memorySection =
+      rollingSummary && rollingSummary.trim().length > 0
+        ? `Память о ранних обсуждениях (сжатые блоки чата, от старых к новым):
+${rollingSummary}
+
+`
+        : "";
+
     const system = `Ты — Гид, дружелюбный AI-помощник в чате группы друзей, планирующих путешествие.
 
 Контекст поездки:
 ${tripCtx}
 
-Последние сообщения в чате:
+${memorySection}Последние сообщения в чате:
 ${recent || "(пусто)"}
 
 Правила:
 - Отвечай на русском, в дружеском тоне, как в чате.
+- Опирайся на «Память о ранних обсуждениях», чтобы помнить весь чат, а не только последние сообщения.
 - Будь конкретен: предлагай реальные места, давай суммы в рублях, оценивай время.
 - Используй короткие маркированные списки (строки с "- ") когда уместно.
 - Можешь выделять ключевое **жирным** (используй ** **).
@@ -241,6 +311,14 @@ export type ChatAnalysisSection = {
 export type ChatAnalysisResult = {
   summary: string;
   sections: ChatAnalysisSection[];
+};
+
+export type BlockSummaryResult = {
+  mood: string;
+  summary: string;
+  topics: string[];
+  decisions: string[];
+  questions: string[];
 };
 
 function formatRecent(msgs: RecentMessageDto[]): string {

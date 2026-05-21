@@ -57,6 +57,23 @@ export type ChatAnalysis = {
   messageCount: number;
 };
 
+export type ChatSummaryBlock = {
+  id: string;
+  blockNumber: number;
+  fromIndex: number;
+  toIndex: number;
+  mood: string;
+  summary: string;
+  topics: string[];
+  decisions: string[];
+  questions: string[];
+  createdAt: string;
+};
+
+export function getSummaries(tripId: string) {
+  return apiFetch<ChatSummaryBlock[]>(`/trips/${tripId}/chat/summaries`);
+}
+
 export function getAnalysis(tripId: string) {
   return apiFetch<ChatAnalysis | null>(`/trips/${tripId}/chat/analysis`);
 }

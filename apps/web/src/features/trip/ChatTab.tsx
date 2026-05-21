@@ -11,7 +11,13 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/shared/lib/auth-context";
 import { UserAvatar, UserAvatarStack } from "@/shared/ui/UserAvatar";
-import { listMessages, sendMessage, type ApiAuthor, type ApiMessage } from "@/shared/api/chat";
+import {
+  getSummaries,
+  listMessages,
+  sendMessage,
+  type ApiAuthor,
+  type ApiMessage,
+} from "@/shared/api/chat";
 import { getTrip } from "@/shared/api/trips";
 
 const iconBtn: CSSProperties = {
@@ -396,7 +402,9 @@ export function ChatTab({ tripId }: { tripId: string }) {
           </div>
         </div>
 
-        {railOpen && <ContextRail messages={messages} onClose={() => setRailOpen(false)} />}
+        {railOpen && (
+          <ContextRail tripId={tripId} messages={messages} onClose={() => setRailOpen(false)} />
+        )}
       </div>
     </div>
   );
@@ -772,13 +780,20 @@ function renderInlineMentions(text: string): ReactNode[] {
 }
 
 function ContextRail({
+  tripId,
   messages,
   onClose,
 }: {
+  tripId: string;
   messages: ApiMessage[];
   onClose: () => void;
 }) {
   const pinned = messages.filter((m) => m.isBot).slice(-1);
+  const summariesQuery = useQuery({
+    queryKey: ["trips", tripId, "summaries"] as const,
+    queryFn: () => getSummaries(tripId),
+  });
+  const summaries = summariesQuery.data ?? [];
   return (
     <div
       style={{
@@ -833,8 +848,66 @@ function ContextRail({
           <li>состав группы и роли</li>
           <li>маршрут (дни, время, пункты)</li>
           <li>бюджет и кто за что платил</li>
-          <li>последние ~12 сообщений в чате</li>
+          <li>сжатую память всего чата + последние сообщения</li>
         </ul>
+      </div>
+
+      <div className="card" style={{ padding: 16 }}>
+        <div
+          className="eyebrow"
+          style={{
+            marginBottom: 10,
+            display: "flex",
+            justifyContent: "space-between",
+          }}
+        >
+          <span>память чата</span>
+          <span style={{ color: "var(--ink-3)" }}>{summaries.length} бл.</span>
+        </div>
+        {summaries.length === 0 ? (
+          <div className="mono" style={{ fontSize: 11, color: "var(--ink-3)", lineHeight: 1.5 }}>
+            копится автоматически: каждые 100 сообщений гид сжимает блок чата
+            в краткую сводку по настроению и договорённостям
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, maxHeight: 300, overflow: "auto" }}>
+            {summaries.map((s) => (
+              <div
+                key={s.id}
+                style={{
+                  paddingBottom: 10,
+                  borderBottom: "1px dashed var(--line)",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "baseline",
+                    marginBottom: 4,
+                  }}
+                >
+                  <span className="mono" style={{ fontSize: 10, color: "var(--ink-3)" }}>
+                    блок {s.blockNumber} · {s.fromIndex + 1}–{s.toIndex}
+                  </span>
+                </div>
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: "var(--terracotta)",
+                    fontWeight: 500,
+                    marginBottom: 4,
+                  }}
+                >
+                  {s.mood}
+                </div>
+                <div style={{ fontSize: 12, color: "var(--ink-2)", lineHeight: 1.45 }}>
+                  {s.summary}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="card" style={{ padding: 16 }}>

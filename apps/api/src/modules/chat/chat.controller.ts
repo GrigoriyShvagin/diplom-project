@@ -28,6 +28,11 @@ export class ChatController {
     return this.chat.getLatestAnalysis(tripId, user.id);
   }
 
+  @Get("summaries")
+  summaries(@Param("tripId") tripId: string, @CurrentUser() user: AuthUser) {
+    return this.chat.getSummaries(tripId, user.id);
+  }
+
   @Post("analyze")
   analyze(@Param("tripId") tripId: string, @CurrentUser() user: AuthUser) {
     return this.chat.runAnalysis(tripId, user.id);
