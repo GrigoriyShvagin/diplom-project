@@ -1,0 +1,70 @@
+<mxfile host="app.diagrams.net" type="device">
+  <diagram name="Маршруты и экраны клиента" id="routes">
+    <mxGraphModel dx="900" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="700" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="Маршрутизация и экраны клиента (React Router)" style="text;html=1;align=center;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="280" y="20" width="540" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="app" value="App (провайдеры: QueryClient, I18n, Auth + BrowserRouter)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="330" y="70" width="440" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="pub" value="Публичные маршруты" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontStyle=1;fillColor=#f5f5f5;strokeColor=#999999;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="60" y="180" width="420" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="r1" value="/  →  LandingPage" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="90" y="220" width="170" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="r2" value="/login  →  LoginPage" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="90" y="270" width="170" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="r3" value="/register  →  RegisterPage" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="290" y="220" width="170" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="auth" value="AuthShell (общая форма)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="290" y="285" width="170" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="priv" value="Приватные маршруты (RequireAuth)" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontStyle=1;fillColor=#f5f5f5;strokeColor=#999999;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="540" y="180" width="520" height="480" as="geometry" />
+        </mxCell>
+        <mxCell id="r4" value="/trips  →  DashboardPage&#10;(список, фильтры, создание)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="570" y="220" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="r5" value="/trips/:id  →  TripDetailPage" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="570" y="320" width="220" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="tabs" value="8 вкладок поездки" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontStyle=1;fillColor=none;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="560" y="390" width="480" height="250" as="geometry" />
+        </mxCell>
+        <mxCell id="tb1" value="Чат (ChatTab)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="580" y="420" width="130" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="tb2" value="Сводка (SummaryTab)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="730" y="420" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="tb3" value="Карта (MapTab)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="890" y="420" width="130" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="tb4" value="Маршрут (ItineraryTab)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="580" y="475" width="150" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="tb5" value="Голосования (VotesTab)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="745" y="475" width="150" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="tb6" value="Бюджет (BudgetTab)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="910" y="475" width="110" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="tb7" value="Участники (MembersTab)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="580" y="530" width="160" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="tb8" value="Итоги (FinalTab)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="755" y="530" width="130" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="ea" style="endArrow=block;html=1;" edge="1" parent="1" source="app" target="pub"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eb" style="endArrow=block;html=1;" edge="1" parent="1" source="app" target="priv"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ec" style="endArrow=block;html=1;" edge="1" parent="1" source="r5" target="tabs"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

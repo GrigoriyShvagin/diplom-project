@@ -1,0 +1,37 @@
+<mxfile host="app.diagrams.net" type="device">
+  <diagram name="Последовательность — аутентификация" id="seqauth">
+    <mxGraphModel dx="1000" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="700" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="Диаграмма последовательности: аутентификация (JWT в cookie)" style="text;html=1;align=center;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="250" y="15" width="600" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ll1" value="Браузер (SPA)" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="80" y="60" width="140" height="540" as="geometry" />
+        </mxCell>
+        <mxCell id="ll2" value="AuthController" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="340" y="60" width="140" height="540" as="geometry" />
+        </mxCell>
+        <mxCell id="ll3" value="AuthService" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="600" y="60" width="140" height="540" as="geometry" />
+        </mxCell>
+        <mxCell id="ll4" value="PostgreSQL" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="860" y="60" width="140" height="540" as="geometry" />
+        </mxCell>
+        <mxCell id="m1" value="POST /auth/login {email, password}" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="150" y="150" as="sourcePoint" /><mxPoint x="410" y="150" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="m2" value="login(dto)" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="410" y="195" as="sourcePoint" /><mxPoint x="670" y="195" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="m3" value="поиск пользователя по email" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="670" y="240" as="sourcePoint" /><mxPoint x="930" y="240" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="m4" value="пользователь + passwordHash" style="html=1;endArrow=open;dashed=1;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="930" y="285" as="sourcePoint" /><mxPoint x="670" y="285" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="m5" value="bcrypt.compare(...) + sign JWT {sub, email}" style="html=1;endArrow=block;fontSize=11;rounded=1;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="670" y="330" as="sourcePoint" /><mxPoint x="670" y="370" as="targetPoint" /><Array as="points"><mxPoint x="760" y="330" /><mxPoint x="760" y="370" /></Array></mxGeometry></mxCell>
+        <mxCell id="m6" value="{token, user}" style="html=1;endArrow=open;dashed=1;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="670" y="410" as="sourcePoint" /><mxPoint x="410" y="410" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="m7" value="Set-Cookie fjp_session (HttpOnly) + {user}" style="html=1;endArrow=open;dashed=1;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="410" y="455" as="sourcePoint" /><mxPoint x="150" y="455" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="m8" value="GET /users/me (cookie автоматически)" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="150" y="510" as="sourcePoint" /><mxPoint x="410" y="510" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="note8" value="JwtAuthGuard → JwtStrategy&#10;извлекает токен из cookie" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="330" y="525" width="170" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="m9" value="профиль пользователя" style="html=1;endArrow=open;dashed=1;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="410" y="585" as="sourcePoint" /><mxPoint x="150" y="585" as="targetPoint" /></mxGeometry></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

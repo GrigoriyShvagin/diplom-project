@@ -1,0 +1,44 @@
+<mxfile host="app.diagrams.net" type="device">
+  <diagram name="Алгоритм разделения расходов" id="exp">
+    <mxGraphModel dx="900" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="900" pageHeight="1000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="Алгоритм разделения расхода и расчёта баланса" style="text;html=1;align=center;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="180" y="20" width="540" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="start" value="Создание расхода:&#10;сумма S, плательщик P,&#10;участники раздела U1..Un" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="300" y="70" width="240" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="d1" value="P и все Ui&#10;— участники поездки?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="300" y="170" width="240" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="err" value="400 Bad Request" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="620" y="195" width="160" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="p1" value="Доля = округлить(S / n, до копеек)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="300" y="310" width="240" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="p2" value="Создать ExpenseSplit для каждого Ui&#10;(amount = Доля, status = pending)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="290" y="390" width="260" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="p3" value="Сохранить Expense + доли" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="300" y="480" width="240" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="p4" value="Расчёт баланса (на клиенте):&#10;для каждого расхода:&#10;баланс[плательщик] += S&#10;для каждой доли: баланс[участник] −= Доля" style="rounded=0;whiteSpace=wrap;html=1;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="270" y="560" width="300" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="end" value="Итог: «+» вам должны,&#10;«−» вы должны группе" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="300" y="680" width="240" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="e0" style="endArrow=block;html=1;" edge="1" parent="1" source="start" target="d1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e1" value="нет" style="endArrow=block;html=1;fontSize=11;" edge="1" parent="1" source="d1" target="err"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e2" value="да" style="endArrow=block;html=1;fontSize=11;" edge="1" parent="1" source="d1" target="p1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e3" style="endArrow=block;html=1;" edge="1" parent="1" source="p1" target="p2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e4" style="endArrow=block;html=1;" edge="1" parent="1" source="p2" target="p3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e5" style="endArrow=block;html=1;" edge="1" parent="1" source="p3" target="p4"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e6" style="endArrow=block;html=1;" edge="1" parent="1" source="p4" target="end"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

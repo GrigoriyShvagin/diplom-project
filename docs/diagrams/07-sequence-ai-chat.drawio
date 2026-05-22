@@ -1,0 +1,45 @@
+<mxfile host="app.diagrams.net" type="device">
+  <diagram name="Последовательность — сообщение с ИИ" id="seqai">
+    <mxGraphModel dx="1000" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="760" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="Диаграмма последовательности: сообщение с обращением к ИИ (@гид)" style="text;html=1;align=center;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="250" y="15" width="680" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="l1" value="Браузер" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="60" y="60" width="120" height="640" as="geometry" />
+        </mxCell>
+        <mxCell id="l2" value="ChatController" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="250" y="60" width="120" height="640" as="geometry" />
+        </mxCell>
+        <mxCell id="l3" value="ChatService" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="440" y="60" width="120" height="640" as="geometry" />
+        </mxCell>
+        <mxCell id="l4" value="AiService" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="640" y="60" width="120" height="640" as="geometry" />
+        </mxCell>
+        <mxCell id="l5" value="PostgreSQL" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="840" y="60" width="120" height="640" as="geometry" />
+        </mxCell>
+        <mxCell id="l6" value="Claude API" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="1030" y="60" width="120" height="640" as="geometry" />
+        </mxCell>
+        <mxCell id="a1" value="POST /chat/messages {text}" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="120" y="140" as="sourcePoint" /><mxPoint x="310" y="140" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="a2" value="send(tripId, userId, dto)" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="310" y="175" as="sourcePoint" /><mxPoint x="500" y="175" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="a3" value="сохранить сообщение пользователя" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="500" y="210" as="sourcePoint" /><mxPoint x="900" y="210" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="a4" value="ensureSummaries(): свёртка завершённых блоков" style="html=1;endArrow=block;fontSize=11;rounded=1;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="500" y="250" as="sourcePoint" /><mxPoint x="500" y="290" as="targetPoint" /><Array as="points"><mxPoint x="590" y="250" /><mxPoint x="590" y="290" /></Array></mxGeometry></mxCell>
+        <mxCell id="frame" value="alt  [текст содержит @гид]" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;align=left;spacingLeft=8;fontStyle=2;fillColor=none;strokeColor=#9673a6;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="300" y="320" width="700" height="280" as="geometry" />
+        </mxCell>
+        <mxCell id="a5" value="buildRollingSummary() — память блоков" style="html=1;endArrow=block;fontSize=11;rounded=1;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="500" y="360" as="sourcePoint" /><mxPoint x="500" y="395" as="targetPoint" /><Array as="points"><mxPoint x="590" y="360" /><mxPoint x="590" y="395" /></Array></mxGeometry></mxCell>
+        <mxCell id="a6" value="последние ~12 сообщений" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="500" y="425" as="sourcePoint" /><mxPoint x="900" y="425" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="a7" value="askGuide(вопрос, recent, rollingSummary)" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="500" y="465" as="sourcePoint" /><mxPoint x="700" y="465" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="a8" value="messages.create (контекст поездки + память)" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="700" y="500" as="sourcePoint" /><mxPoint x="1090" y="500" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="a9" value="ответ" style="html=1;endArrow=open;dashed=1;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="1090" y="535" as="sourcePoint" /><mxPoint x="700" y="535" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="a10" value="сохранить ответ бота" style="html=1;endArrow=block;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="500" y="570" as="sourcePoint" /><mxPoint x="900" y="570" as="targetPoint" /></mxGeometry></mxCell>
+        <mxCell id="a11" value="{messages[], aiError?}" style="html=1;endArrow=open;dashed=1;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="500" y="640" as="sourcePoint" /><mxPoint x="120" y="640" as="targetPoint" /></mxGeometry></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

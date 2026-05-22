@@ -1,0 +1,76 @@
+<mxfile host="app.diagrams.net" type="device">
+  <diagram name="Диаграмма вариантов использования" id="usecase">
+    <mxGraphModel dx="900" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="Диаграмма вариантов использования — Friends Journey" style="text;html=1;align=center;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="300" y="20" width="520" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="boundary" value="Система Friends Journey" style="rounded=1;whiteSpace=wrap;html=1;verticalAlign=top;fontStyle=1;fillColor=none;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="340" y="70" width="440" height="710" as="geometry" />
+        </mxCell>
+        <mxCell id="actorU" value="Участник" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1">
+          <mxGeometry x="120" y="180" width="50" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="actorO" value="Организатор" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1">
+          <mxGeometry x="120" y="380" width="50" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="actorAI" value="ИИ-ассистент «Гид»&#10;(Claude)" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" vertex="1" parent="1">
+          <mxGeometry x="950" y="560" width="50" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="uc1" value="Регистрация и вход" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="380" y="100" width="160" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="uc2" value="Просмотр поездок" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="380" y="165" width="160" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="uc3" value="Создание поездки" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="580" y="100" width="160" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="uc4" value="Приглашение участников" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="580" y="165" width="160" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="uc5" value="Ведение расписания по дням" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="380" y="240" width="160" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="uc6" value="Места на карте (поиск)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="580" y="240" width="160" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="uc7" value="Голосования" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="380" y="315" width="160" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="uc8" value="Учёт расходов и разделение" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="580" y="315" width="160" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="uc9" value="Общение в чате" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="380" y="430" width="160" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="uc10" value="Анализ переписки" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="380" y="510" width="160" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="uc11" value="Контекстные подсказки" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="380" y="590" width="160" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="uc12" value="Ответ гида в чате&#10;(с памятью)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="580" y="430" width="160" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="eU1" style="endArrow=none;html=1;" edge="1" parent="1" source="actorU" target="uc1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eU2" style="endArrow=none;html=1;" edge="1" parent="1" source="actorU" target="uc2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eU5" style="endArrow=none;html=1;" edge="1" parent="1" source="actorU" target="uc5"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eU6" style="endArrow=none;html=1;" edge="1" parent="1" source="actorU" target="uc6"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eU7" style="endArrow=none;html=1;" edge="1" parent="1" source="actorU" target="uc7"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eU8" style="endArrow=none;html=1;" edge="1" parent="1" source="actorU" target="uc8"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eU9" style="endArrow=none;html=1;" edge="1" parent="1" source="actorU" target="uc9"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eU10" style="endArrow=none;html=1;" edge="1" parent="1" source="actorU" target="uc10"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eU11" style="endArrow=none;html=1;" edge="1" parent="1" source="actorU" target="uc11"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eO3" style="endArrow=none;html=1;" edge="1" parent="1" source="actorO" target="uc3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eO4" style="endArrow=none;html=1;" edge="1" parent="1" source="actorO" target="uc4"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eAI9" value="«include»" style="endArrow=open;dashed=1;html=1;fontSize=10;" edge="1" parent="1" source="uc9" target="uc12"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eAI12" style="endArrow=none;html=1;" edge="1" parent="1" source="uc12" target="actorAI"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eAI10" style="endArrow=none;html=1;" edge="1" parent="1" source="uc10" target="actorAI"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eAI11" style="endArrow=none;html=1;" edge="1" parent="1" source="uc11" target="actorAI"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

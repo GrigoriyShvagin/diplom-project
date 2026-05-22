@@ -1,0 +1,88 @@
+<mxfile host="app.diagrams.net" type="device">
+  <diagram name="ER-диаграмма" id="er">
+    <mxGraphModel dx="1200" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="1150" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="ER-диаграмма базы данных (17 сущностей)" style="text;html=1;align=center;fontSize=18;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="620" y="20" width="460" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="User" value="&lt;b&gt;User&lt;/b&gt;&lt;br&gt;PK id : uuid&lt;br&gt;name&lt;br&gt;email (UK)&lt;br&gt;passwordHash&lt;br&gt;avatarUrl&lt;br&gt;createdAt" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="40" y="440" width="180" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="Trip" value="&lt;b&gt;Trip&lt;/b&gt;&lt;br&gt;PK id : uuid&lt;br&gt;title&lt;br&gt;destinationLabel&lt;br&gt;startDate / endDate&lt;br&gt;status&lt;br&gt;FK ownerId → User" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="380" y="440" width="190" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="TripMember" value="&lt;b&gt;TripMember&lt;/b&gt;&lt;br&gt;PK id&lt;br&gt;role&lt;br&gt;FK tripId&lt;br&gt;FK userId&lt;br&gt;UK (tripId,userId)" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="190" y="220" width="180" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="TripDay" value="&lt;b&gt;TripDay&lt;/b&gt;&lt;br&gt;PK id&lt;br&gt;date&lt;br&gt;dayNumber&lt;br&gt;FK tripId" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="660" y="220" width="170" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="ScheduleItem" value="&lt;b&gt;ScheduleItem&lt;/b&gt;&lt;br&gt;PK id&lt;br&gt;type, title&lt;br&gt;startTime / endTime&lt;br&gt;lat, lng, address&lt;br&gt;sortOrder&lt;br&gt;FK tripDayId&lt;br&gt;FK placeCacheId" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="940" y="120" width="180" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="PlaceCache" value="&lt;b&gt;PlaceCache&lt;/b&gt;&lt;br&gt;PK id&lt;br&gt;provider&lt;br&gt;providerPlaceId&lt;br&gt;lat, lng&lt;br&gt;FK tripId" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;fillColor=#f5f5f5;strokeColor=#999999;" vertex="1" parent="1">
+          <mxGeometry x="1240" y="120" width="170" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="TripRoute" value="&lt;b&gt;TripRoute&lt;/b&gt;&lt;br&gt;PK id&lt;br&gt;title&lt;br&gt;transportType&lt;br&gt;FK tripId" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;fillColor=#f5f5f5;strokeColor=#999999;" vertex="1" parent="1">
+          <mxGeometry x="940" y="300" width="170" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="RoutePoint" value="&lt;b&gt;RoutePoint&lt;/b&gt;&lt;br&gt;PK id&lt;br&gt;sortOrder&lt;br&gt;FK routeId&lt;br&gt;FK placeCacheId" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;fillColor=#f5f5f5;strokeColor=#999999;" vertex="1" parent="1">
+          <mxGeometry x="1240" y="300" width="170" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="Vote" value="&lt;b&gt;Vote&lt;/b&gt;&lt;br&gt;PK id&lt;br&gt;title&lt;br&gt;resolvedAt&lt;br&gt;FK tripId&lt;br&gt;FK createdById → User" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="660" y="620" width="180" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="VoteOption" value="&lt;b&gt;VoteOption&lt;/b&gt;&lt;br&gt;PK id&lt;br&gt;label&lt;br&gt;FK voteId" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="940" y="620" width="160" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="VoteAnswer" value="&lt;b&gt;VoteAnswer&lt;/b&gt;&lt;br&gt;PK id&lt;br&gt;FK optionId&lt;br&gt;FK userId&lt;br&gt;UK (optionId,userId)" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="1240" y="620" width="180" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="Expense" value="&lt;b&gt;Expense&lt;/b&gt;&lt;br&gt;PK id&lt;br&gt;title, category&lt;br&gt;amount, currency&lt;br&gt;FK tripId&lt;br&gt;FK createdById → User" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="660" y="820" width="180" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="ExpenseSplit" value="&lt;b&gt;ExpenseSplit&lt;/b&gt;&lt;br&gt;PK id&lt;br&gt;amount&lt;br&gt;status&lt;br&gt;FK expenseId&lt;br&gt;FK userId" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="940" y="820" width="170" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="TripMessage" value="&lt;b&gt;TripMessage&lt;/b&gt;&lt;br&gt;PK id&lt;br&gt;text&lt;br&gt;isBot&lt;br&gt;FK authorId → User&lt;br&gt;FK tripId&lt;br&gt;IX (tripId,createdAt)" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="360" y="700" width="190" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="ChatSummary" value="&lt;b&gt;ChatSummary&lt;/b&gt;&lt;br&gt;PK id&lt;br&gt;blockNumber&lt;br&gt;fromIndex / toIndex&lt;br&gt;mood, summary&lt;br&gt;topics/decisions/questions JSON&lt;br&gt;FK tripId&lt;br&gt;UK (tripId,blockNumber)" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="40" y="680" width="220" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="ChatAnalysis" value="&lt;b&gt;ChatAnalysis&lt;/b&gt;&lt;br&gt;PK id&lt;br&gt;summary&lt;br&gt;rawModelOutput JSON&lt;br&gt;FK tripId" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="40" y="880" width="200" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="TripChat" value="&lt;b&gt;TripChat&lt;/b&gt;&lt;br&gt;PK id&lt;br&gt;source&lt;br&gt;FK tripId" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;fillColor=#f5f5f5;strokeColor=#999999;" vertex="1" parent="1">
+          <mxGeometry x="360" y="880" width="170" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="rUTrip" value="владеет" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERone;endArrow=ERmany;fontSize=10;" edge="1" parent="1" source="User" target="Trip"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="rTM" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERone;endArrow=ERmany;" edge="1" parent="1" source="Trip" target="TripMember"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="rUM" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERone;endArrow=ERmany;" edge="1" parent="1" source="User" target="TripMember"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="rTDay" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERone;endArrow=ERmany;" edge="1" parent="1" source="Trip" target="TripDay"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="rDayItem" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERone;endArrow=ERmany;" edge="1" parent="1" source="TripDay" target="ScheduleItem"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="rPCItem" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERzeroToOne;endArrow=ERmany;dashed=1;" edge="1" parent="1" source="PlaceCache" target="ScheduleItem"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="rTRoute" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERone;endArrow=ERmany;dashed=1;" edge="1" parent="1" source="Trip" target="TripRoute"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="rRoutePt" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERone;endArrow=ERmany;dashed=1;" edge="1" parent="1" source="TripRoute" target="RoutePoint"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="rPCRpt" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERzeroToOne;endArrow=ERmany;dashed=1;" edge="1" parent="1" source="PlaceCache" target="RoutePoint"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="rTPC" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERone;endArrow=ERmany;dashed=1;" edge="1" parent="1" source="Trip" target="PlaceCache"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="rTVote" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERone;endArrow=ERmany;" edge="1" parent="1" source="Trip" target="Vote"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="rVoteOpt" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERone;endArrow=ERmany;" edge="1" parent="1" source="Vote" target="VoteOption"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="rOptAns" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERone;endArrow=ERmany;" edge="1" parent="1" source="VoteOption" target="VoteAnswer"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="rUAns" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERone;endArrow=ERmany;" edge="1" parent="1" source="User" target="VoteAnswer"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="rUVote" value="создаёт" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERone;endArrow=ERmany;fontSize=10;" edge="1" parent="1" source="User" target="Vote"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="rTExp" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERone;endArrow=ERmany;" edge="1" parent="1" source="Trip" target="Expense"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="rExpSplit" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERone;endArrow=ERmany;" edge="1" parent="1" source="Expense" target="ExpenseSplit"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="rUExp" value="оплачивает" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERone;endArrow=ERmany;fontSize=10;" edge="1" parent="1" source="User" target="Expense"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="rUSplit" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERone;endArrow=ERmany;" edge="1" parent="1" source="User" target="ExpenseSplit"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="rTMsg" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERone;endArrow=ERmany;" edge="1" parent="1" source="Trip" target="TripMessage"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="rUMsg" value="пишет" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERzeroToOne;endArrow=ERmany;fontSize=10;" edge="1" parent="1" source="User" target="TripMessage"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="rTSum" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERone;endArrow=ERmany;" edge="1" parent="1" source="Trip" target="ChatSummary"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="rTAnz" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERone;endArrow=ERmany;" edge="1" parent="1" source="Trip" target="ChatAnalysis"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="rTChat" style="edgeStyle=entityRelationEdgeStyle;html=1;startArrow=ERone;endArrow=ERmany;dashed=1;" edge="1" parent="1" source="Trip" target="TripChat"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
